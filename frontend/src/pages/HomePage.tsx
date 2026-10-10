@@ -159,10 +159,10 @@ export const HomePage: React.FC = () => {
 
         {/* Floating handwritten annotation in top-right */}
         <div className="hidden lg:block absolute top-16 right-20 z-10 select-none pointer-events-none text-right">
-          <p className="font-serif italic text-white/80 text-xl tracking-wide leading-tight drop-shadow-md">
+          <p className="font-handwriting text-white/95 text-3xl sm:text-4xl tracking-wide leading-tight drop-shadow-lg">
             Ideas <br />
             Creators <br />
-            <span className="text-[#C4B5FD]">Real Impact</span>
+            <span className="text-[#A78BFA]">Real Impact</span>
           </p>
         </div>
 
@@ -370,11 +370,14 @@ export const HomePage: React.FC = () => {
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
 
-                <div className="hidden sm:flex items-center gap-2 text-slate-400 select-none">
-                  <span className="font-serif italic text-xs text-slate-500">
+                <div className="hidden sm:flex items-center gap-2 text-slate-500 select-none">
+                  <span className="font-handwriting text-2xl text-slate-500 transform -rotate-3">
                     Turn ideas into briefs
                   </span>
-                  <span className="text-lg">⤵</span>
+                  <svg className="w-8 h-8 text-slate-400 -rotate-12" viewBox="0 0 50 50" fill="none" stroke="currentColor">
+                    <path d="M10 15 C 25 10, 40 25, 42 38" strokeWidth="2" strokeLinecap="round" />
+                    <path d="M35 36 L 42 38 L 41 30" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
                 </div>
               </div>
 
@@ -385,58 +388,86 @@ export const HomePage: React.FC = () => {
               <div className="rounded-2xl bg-white border border-slate-200/90 shadow-2xl overflow-hidden text-xs">
                 
                 {/* Mockup Window Header */}
-                <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-rose-400" />
-                    <div className="w-3 h-3 rounded-full bg-amber-400" />
-                    <div className="w-3 h-3 rounded-full bg-emerald-400" />
-                    <span className="ml-2 font-display font-bold text-slate-700 text-[11px]">
-                      Cre8Match<span className="text-[#6366F1]">.AI</span> Brief Studio
+                <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-6 h-6 rounded-md bg-[#6366F1] flex items-center justify-center text-white">
+                      <Sparkles className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="font-display font-bold text-slate-800 text-xs">
+                      Cre8Match<span className="text-[#6366F1]">.AI</span>
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full bg-slate-200" />
+                    <div className="w-6 h-6 rounded-full bg-slate-200 border border-slate-300 overflow-hidden">
+                      <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50" alt="" className="w-full h-full object-cover" />
+                    </div>
                   </div>
                 </div>
 
-                <div className="p-6 space-y-5 bg-white">
+                <div className="flex flex-col md:flex-row bg-white">
                   
-                  {/* Top Input Card */}
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-900 text-xs">Create a Creative Brief</span>
-                      <span className="text-[10px] text-slate-400">Describe campaign & structure with AI</span>
-                    </div>
-
-                    <div className="relative">
-                      <textarea
-                        rows={2}
-                        value={demoIdea}
-                        onChange={(e) => setDemoIdea(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-800 focus:outline-none focus:border-[#6366F1] resize-none"
-                      />
-                    </div>
-
-                    <div className="flex justify-end">
-                      <button
-                        onClick={handleStructureDemo}
-                        disabled={isStructuringDemo}
-                        className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#6366F1] hover:bg-[#4F46E5] text-white text-[11px] font-semibold transition-all shadow-sm disabled:opacity-50"
-                      >
-                        <Sparkles className="w-3 h-3" />
-                        <span>{isStructuringDemo ? 'Structuring...' : 'Structure with AI'}</span>
-                      </button>
-                    </div>
+                  {/* Left Mini Sidebar from Reference Image */}
+                  <div className="w-full md:w-44 border-b md:border-b-0 md:border-r border-slate-100 p-4 space-y-1 text-[11px] bg-slate-50/40 shrink-0">
+                    <button className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-violet-100 text-[#6366F1] font-semibold text-left">
+                      <span>✨</span>
+                      <span>Create Brief</span>
+                    </button>
+                    <button className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 font-medium text-left">
+                      <span>📁</span>
+                      <span>My Briefs</span>
+                    </button>
+                    <button className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 font-medium text-left">
+                      <span>🔍</span>
+                      <span>Discover Creators</span>
+                    </button>
+                    <button className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 font-medium text-left">
+                      <span>🔖</span>
+                      <span>Shortlist</span>
+                    </button>
+                    <button className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 font-medium text-left">
+                      <span>📦</span>
+                      <span>Engagements</span>
+                    </button>
                   </div>
 
-                  {/* Bottom Structured Brief (Editable) */}
-                  <div className="space-y-3 pt-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-900 text-xs">Generated Brief (Editable)</span>
-                      <span className="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                        Structured Schema Validated
-                      </span>
+                  {/* Main Mockup Area */}
+                  <div className="p-5 flex-1 space-y-4">
+                    
+                    {/* Top Input Card */}
+                    <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/80 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-900 text-xs">Create a Creative Brief</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500">
+                        Describe your campaign and let AI structure it for you.
+                      </p>
+
+                      <div className="relative">
+                        <textarea
+                          rows={2}
+                          value={demoIdea}
+                          onChange={(e) => setDemoIdea(e.target.value)}
+                          className="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-[11px] text-slate-800 focus:outline-none focus:border-[#6366F1] resize-none leading-relaxed"
+                        />
+                      </div>
+
+                      <div className="flex justify-end">
+                        <button
+                          onClick={handleStructureDemo}
+                          disabled={isStructuringDemo}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#6366F1] hover:bg-[#4F46E5] text-white text-[10px] font-semibold transition-all shadow-sm disabled:opacity-50"
+                        >
+                          <Sparkles className="w-3 h-3" />
+                          <span>{isStructuringDemo ? 'Structuring...' : 'Structure with AI'}</span>
+                        </button>
+                      </div>
                     </div>
+
+                    {/* Bottom Structured Brief (Editable) */}
+                    <div className="space-y-2.5 pt-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-900 text-xs">Generated Brief (Editable)</span>
+                      </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -522,6 +553,7 @@ export const HomePage: React.FC = () => {
 
           </div>
 
+        </div>
         </div>
       </section>
 
@@ -776,7 +808,7 @@ export const HomePage: React.FC = () => {
 
         {/* Script text in top right */}
         <div className="hidden lg:block absolute top-12 right-20 z-10 select-none pointer-events-none text-right">
-          <p className="font-serif italic text-white/70 text-lg tracking-wide drop-shadow-md">
+          <p className="font-handwriting text-white/90 text-3xl sm:text-4xl tracking-wide leading-tight drop-shadow-lg">
             Same tools. <br />
             New possibilities.
           </p>
