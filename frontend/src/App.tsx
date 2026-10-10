@@ -10,6 +10,7 @@ import { CreatorProfilePage } from './pages/CreatorProfilePage';
 import { CreatorStudioPage } from './pages/CreatorStudioPage';
 import { ShortlistPage } from './pages/ShortlistPage';
 import { EngagementDetailPage } from './pages/EngagementDetailPage';
+import { BrandDashboardPage } from './pages/BrandDashboardPage';
 
 export const App: React.FC = () => {
   return (
@@ -25,6 +26,8 @@ export const App: React.FC = () => {
             <Route path="/creators/:id" element={<CreatorProfilePage />} />
             <Route path="/studio" element={<CreatorStudioPage />} />
             <Route path="/shortlist" element={<ShortlistPage />} />
+            <Route path="/brand-hub" element={<BrandDashboardPage />} />
+            <Route path="/brand-dashboard" element={<BrandDashboardPage />} />
             <Route path="/engagements" element={<EngagementDetailPage />} />
             <Route path="/engagements/:id" element={<EngagementDetailPage />} />
           </Routes>

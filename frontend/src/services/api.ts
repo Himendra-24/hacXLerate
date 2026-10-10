@@ -6,7 +6,11 @@ import {
   CreatorMatchResult,
   ShortlistItem,
   Engagement,
-  Submission
+  Submission,
+  Review,
+  Message,
+  MessageThreadSummary,
+  AssetUpload
 } from '../types';
 
 const API_BASE = '/api/v1';
@@ -197,4 +201,94 @@ export const api = {
     });
     return handleResponse<Submission>(res);
   },
+
+  // Messaging & Live Chat
+  async getMessageThreads(currentUserId: string = 'brand_demo_user'): Promise<MessageThreadSummary[]> {
+    const res = await fetch(`${API_BASE}/messages/threads?current_user_id=${currentUserId}`);
+    return handleResponse<MessageThreadSummary[]>(res);
+  },
+
+  async getConversation(partnerId: string, currentUserId: string = 'brand_demo_user'): Promise<Message[]> {
+    const res = await fetch(`${API_BASE}/messages/conversation/${partnerId}?current_user_id=${currentUserId}`);
+    return handleResponse<Message[]>(res);
+  },
+
+  async getEngagementMessages(engagementId: string): Promise<Message[]> {
+    const res = await fetch(`${API_BASE}/messages/engagement/${engagementId}`);
+    return handleResponse<Message[]>(res);
+  },
+
+  async sendMessage(msg: {
+    engagement_id?: string;
+    sender_id: string;
+    sender_name: string;
+    sender_role: string;
+    recipient_id: string;
+    recipient_name: string;
+    content: string;
+    attachment_url?: string;
+    attachment_name?: string;
+  }): Promise<Message> {
+    const res = await fetch(`${API_BASE}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(msg),
+    });
+    return handleResponse<Message>(res);
+  },
+
+  async markThreadRead(partnerId: string, currentUserId: string = 'brand_demo_user'): Promise<void> {
+    await fetch(`${API_BASE}/messages/mark-thread-read/${partnerId}?current_user_id=${currentUserId}`, {
+      method: 'POST'
+    });
+  },
+
+  // Reviews & Ratings
+  async getCreatorReviews(creatorId: string): Promise<Review[]> {
+    const res = await fetch(`${API_BASE}/reviews/creator/${creatorId}`);
+    return handleResponse<Review[]>(res);
+  },
+
+  async createReview(review: {
+    creator_id: string;
+    engagement_id?: string;
+    brand_name: string;
+    brand_avatar?: string;
+    rating: number;
+    delivery_speed_rating?: number;
+    workflow_transparency_rating?: number;
+    communication_rating?: number;
+    comment: string;
+    project_title?: string;
+  }): Promise<Review> {
+    const res = await fetch(`${API_BASE}/reviews`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(review),
+    });
+    return handleResponse<Review>(res);
+  },
+
+  // Asset & File Uploads
+  async uploadFile(
+    file: File,
+    uploaderRole: string = 'brand',
+    fileType: string = 'video',
+    relatedEntityType?: string,
+    relatedEntityId?: string
+  ): Promise<AssetUpload> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('uploader_role', uploaderRole);
+    formData.append('file_type', fileType);
+    if (relatedEntityType) formData.append('related_entity_type', relatedEntityType);
+    if (relatedEntityId) formData.append('related_entity_id', relatedEntityId);
+
+    const res = await fetch(`${API_BASE}/uploads`, {
+      method: 'POST',
+      body: formData,
+    });
+    return handleResponse<AssetUpload>(res);
+  },
 };
+

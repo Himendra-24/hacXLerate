@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { CreatorProfile, PortfolioProject } from '../types';
+import { CreatorProfile, PortfolioProject, Review } from '../types';
 import { api } from '../services/api';
 import { Badge } from '../components/ui/Badge';
 import { WorkflowTimeline } from '../components/creators/WorkflowTimeline';
+import { DirectMessageModal } from '../components/messaging/DirectMessageModal';
 import {
   ShieldCheck,
   Bookmark,
@@ -16,7 +17,9 @@ import {
   Cpu,
   FileCheck,
   CheckCircle2,
-  Calendar
+  Calendar,
+  Star,
+  MessageSquare
 } from 'lucide-react';
 
 export const CreatorProfilePage: React.FC = () => {
@@ -25,7 +28,9 @@ export const CreatorProfilePage: React.FC = () => {
 
   const [creator, setCreator] = useState<CreatorProfile | null>(null);
   const [selectedProject, setSelectedProject] = useState<PortfolioProject | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [isShortlisted, setIsShortlisted] = useState(false);
+  const [chatModalOpen, setChatModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,6 +45,8 @@ export const CreatorProfilePage: React.FC = () => {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
+
+    api.getCreatorReviews(id).then(setReviews).catch(console.error);
 
     api.getShortlist().then((items) => {
       setIsShortlisted(items.some((i) => i.creator_id === id));
@@ -129,6 +136,11 @@ export const CreatorProfilePage: React.FC = () => {
               </p>
 
               <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 pt-1">
+                <div className="flex items-center gap-1.5 text-xs text-amber-400 font-semibold bg-charcoal-950/70 px-2.5 py-1 rounded-lg border border-charcoal-800">
+                  <Star className="w-3.5 h-3.5 fill-current" />
+                  <span>{creator.rating_avg ? creator.rating_avg.toFixed(1) : '5.0'}</span>
+                  <span className="text-slate-500 font-normal">({reviews.length || creator.reviews_count || 1} reviews)</span>
+                </div>
                 <span className="flex items-center gap-1">
                   <MapPin className="w-3.5 h-3.5 text-slate-500" />
                   {creator.location || 'Remote'}
@@ -151,7 +163,15 @@ export const CreatorProfilePage: React.FC = () => {
           </div>
 
           {/* Action CTAs */}
-          <div className="flex items-center gap-2.5 self-start sm:self-center">
+          <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-center">
+            <button
+              onClick={() => setChatModalOpen(true)}
+              className="px-4 py-2 rounded-xl text-xs font-semibold bg-charcoal-800 border border-charcoal-700 text-slate-200 hover:text-white hover:bg-charcoal-750 transition-all flex items-center gap-1.5 shadow-subtle"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-electric-400" />
+              <span>Direct Message</span>
+            </button>
+
             <button
               onClick={handleToggleShortlist}
               className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 ${
@@ -368,6 +388,78 @@ export const CreatorProfilePage: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* Verified Client Reviews & Ratings Section */}
+      <div className="rounded-3xl bg-charcoal-900 border border-charcoal-800 p-6 sm:p-8 space-y-6">
+        <div className="flex items-center justify-between pb-4 border-b border-charcoal-800">
+          <div className="space-y-1">
+            <h3 className="font-display font-bold text-lg text-white flex items-center gap-2">
+              <Star className="w-4 h-4 text-amber-400 fill-current" />
+              <span>Verified Client Reviews & Testimonials ({reviews.length})</span>
+            </h3>
+            <p className="text-xs text-slate-400">
+              Real brand feedback, delivery speed ratings, and workflow transparency scores.
+            </p>
+          </div>
+          <button
+            onClick={() => setChatModalOpen(true)}
+            className="px-4 py-2 rounded-xl bg-electric-600 hover:bg-electric-500 text-white text-xs font-semibold shadow-glow-violet transition-all flex items-center gap-1.5"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>Inquire Directly</span>
+          </button>
+        </div>
+
+        {reviews.length === 0 ? (
+          <p className="text-xs text-slate-400 py-4">No reviews recorded yet for this creator.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {reviews.map((r) => (
+              <div
+                key={r.id}
+                className="p-4 rounded-2xl bg-charcoal-950 border border-charcoal-800 space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <img
+                      src={r.brand_avatar || 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=80'}
+                      alt={r.brand_name}
+                      className="w-8 h-8 rounded-full object-cover ring-1 ring-charcoal-700"
+                    />
+                    <div>
+                      <span className="font-semibold text-white text-xs block">{r.brand_name}</span>
+                      <span className="text-[10px] text-electric-400">{r.project_title || 'Commercial Project'}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 text-amber-400 text-xs font-bold">
+                    <Star className="w-3.5 h-3.5 fill-current" />
+                    <span>{r.rating.toFixed(1)}</span>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-300 leading-relaxed italic">
+                  "{r.comment}"
+                </p>
+
+                <div className="pt-2 border-t border-charcoal-900 flex items-center justify-between text-[10px] text-slate-500">
+                  <span>Speed: {r.delivery_speed_rating.toFixed(1)}★</span>
+                  <span>•</span>
+                  <span>Transparency: {r.workflow_transparency_rating.toFixed(1)}★</span>
+                  <span>•</span>
+                  <span>Communication: {r.communication_rating.toFixed(1)}★</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Direct Message Modal */}
+      <DirectMessageModal
+        isOpen={chatModalOpen}
+        onClose={() => setChatModalOpen(false)}
+        creator={creator}
+      />
 
     </div>
   );

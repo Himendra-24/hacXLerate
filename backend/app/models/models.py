@@ -39,6 +39,8 @@ class CreatorProfile(Base):
     tools = Column(JSON, default=list)             # e.g., ["Runway Gen-3", "Midjourney v6", "ComfyUI"]
     rate_min = Column(Float, nullable=True)
     rate_max = Column(Float, nullable=True)
+    rating_avg = Column(Float, default=4.9)
+    reviews_count = Column(Integer, default=1)
     availability_status = Column(String, default="Available")  # "Available", "Busy", "Booked"
     featured = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
@@ -49,6 +51,7 @@ class CreatorProfile(Base):
     verification_records = relationship("VerificationRecord", back_populates="creator", cascade="all, delete-orphan")
     engagements = relationship("Engagement", back_populates="creator")
     shortlists = relationship("Shortlist", back_populates="creator")
+    reviews = relationship("Review", back_populates="creator", cascade="all, delete-orphan")
 
 
 class PortfolioProject(Base):
@@ -156,6 +159,8 @@ class Engagement(Base):
     brief = relationship("Brief", back_populates="engagements")
     creator = relationship("CreatorProfile", back_populates="engagements")
     submissions = relationship("Submission", back_populates="engagement", cascade="all, delete-orphan")
+    messages = relationship("Message", back_populates="engagement", cascade="all, delete-orphan")
+    review = relationship("Review", back_populates="engagement", uselist=False)
 
 
 class Submission(Base):
@@ -171,3 +176,59 @@ class Submission(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     engagement = relationship("Engagement", back_populates="submissions")
+
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    engagement_id = Column(String, ForeignKey("engagements.id"), nullable=True)
+    sender_id = Column(String, nullable=False)
+    sender_name = Column(String, nullable=False)
+    sender_role = Column(String, default="brand")  # "brand" or "creator"
+    recipient_id = Column(String, nullable=False)
+    recipient_name = Column(String, nullable=False)
+    content = Column(Text, nullable=False)
+    attachment_url = Column(String, nullable=True)
+    attachment_name = Column(String, nullable=True)
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    engagement = relationship("Engagement", back_populates="messages")
+
+
+class Review(Base):
+    __tablename__ = "reviews"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    creator_id = Column(String, ForeignKey("creator_profiles.id"), nullable=False)
+    engagement_id = Column(String, ForeignKey("engagements.id"), nullable=True)
+    brand_name = Column(String, nullable=False)
+    brand_avatar = Column(String, nullable=True)
+    rating = Column(Float, default=5.0)
+    delivery_speed_rating = Column(Float, default=5.0)
+    workflow_transparency_rating = Column(Float, default=5.0)
+    communication_rating = Column(Float, default=5.0)
+    comment = Column(Text, nullable=False)
+    project_title = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    creator = relationship("CreatorProfile", back_populates="reviews")
+    engagement = relationship("Engagement", back_populates="review")
+
+
+class AssetUpload(Base):
+    __tablename__ = "asset_uploads"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    filename = Column(String, nullable=False)
+    original_filename = Column(String, nullable=False)
+    file_type = Column(String, nullable=False)  # "video", "lora", "workflow_json", "image", "document"
+    file_size_bytes = Column(Integer, default=0)
+    storage_path = Column(String, nullable=False)
+    url = Column(String, nullable=False)
+    uploader_role = Column(String, default="brand")  # "brand" or "creator"
+    related_entity_type = Column(String, nullable=True)
+    related_entity_id = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+

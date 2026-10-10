@@ -100,3 +100,65 @@ def test_shortlist_lifecycle():
     # Remove from shortlist
     del_res = client.delete(f"/api/v1/shortlist/creator/{creator_id}")
     assert del_res.status_code == 200
+
+def test_messages_threads_and_sending():
+    # Test getting threads
+    threads_res = client.get("/api/v1/messages/threads?current_user_id=brand_demo_user")
+    assert threads_res.status_code == 200
+    threads = threads_res.json()
+    assert len(threads) > 0
+
+    partner_id = threads[0]["partner_id"]
+    conv_res = client.get(f"/api/v1/messages/conversation/{partner_id}?current_user_id=brand_demo_user")
+    assert conv_res.status_code == 200
+    assert len(conv_res.json()) > 0
+
+    # Test sending a message
+    send_payload = {
+        "sender_id": "brand_demo_user",
+        "sender_name": "Brand Test Lead",
+        "sender_role": "brand",
+        "recipient_id": partner_id,
+        "recipient_name": threads[0]["partner_name"],
+        "content": "Automated unit test message verification."
+    }
+    post_res = client.post("/api/v1/messages", json=send_payload)
+    assert post_res.status_code == 200
+    msg = post_res.json()
+    assert msg["content"] == send_payload["content"]
+
+def test_reviews_lifecycle():
+    creators_res = client.get("/api/v1/creators")
+    creator_id = creators_res.json()[0]["id"]
+
+    # Get reviews
+    reviews_res = client.get(f"/api/v1/reviews/creator/{creator_id}")
+    assert reviews_res.status_code == 200
+
+    # Submit review
+    review_payload = {
+        "creator_id": creator_id,
+        "brand_name": "Test Brand Co",
+        "rating": 5.0,
+        "delivery_speed_rating": 5.0,
+        "workflow_transparency_rating": 5.0,
+        "communication_rating": 5.0,
+        "comment": "Outstanding speed and quality in automated test.",
+        "project_title": "Test Commercial Ad"
+    }
+    create_res = client.post("/api/v1/reviews", json=review_payload)
+    assert create_res.status_code == 200
+    assert create_res.json()["rating"] == 5.0
+
+def test_asset_upload():
+    import io
+    test_file_content = b"Mock AI Video File or ComfyUI Workflow JSON content"
+    files = {"file": ("test_render.mp4", io.BytesIO(test_file_content), "video/mp4")}
+    data = {"uploader_role": "creator", "file_type": "video"}
+
+    upload_res = client.post("/api/v1/uploads", files=files, data=data)
+    assert upload_res.status_code == 200
+    res_data = upload_res.json()
+    assert res_data["original_filename"] == "test_render.mp4"
+    assert "/uploads/" in res_data["url"]
+

@@ -38,6 +38,21 @@ export interface VerificationRecord {
   checked_at?: string;
 }
 
+export interface Review {
+  id: string;
+  creator_id: string;
+  engagement_id?: string;
+  brand_name: string;
+  brand_avatar?: string;
+  rating: number;
+  delivery_speed_rating: number;
+  workflow_transparency_rating: number;
+  communication_rating: number;
+  comment: string;
+  project_title?: string;
+  created_at: string;
+}
+
 export interface CreatorProfile {
   id: string;
   user_id?: string;
@@ -51,12 +66,15 @@ export interface CreatorProfile {
   tools: string[];
   rate_min?: number;
   rate_max?: number;
+  rating_avg?: number;
+  reviews_count?: number;
   availability_status: string;
   featured: boolean;
   created_at: string;
   updated_at: string;
   portfolio_projects: PortfolioProject[];
   verification_records: VerificationRecord[];
+  reviews?: Review[];
 }
 
 export interface Brief {
@@ -152,4 +170,43 @@ export interface Engagement {
   brief?: Brief;
   creator?: CreatorProfile;
   submissions: Submission[];
+  messages?: Message[];
+  review?: Review;
 }
+
+export interface Message {
+  id: string;
+  engagement_id?: string;
+  sender_id: string;
+  sender_name: string;
+  sender_role: 'brand' | 'creator';
+  recipient_id: string;
+  recipient_name: string;
+  content: string;
+  attachment_url?: string;
+  attachment_name?: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface MessageThreadSummary {
+  partner_id: string;
+  partner_name: string;
+  partner_role: 'brand' | 'creator';
+  last_message: string;
+  last_message_at: string;
+  unread_count: number;
+  engagement_id?: string;
+}
+
+export interface AssetUpload {
+  id: string;
+  filename: string;
+  original_filename: string;
+  file_type: string;
+  file_size_bytes: number;
+  url: string;
+  uploader_role: string;
+  created_at: string;
+}
+

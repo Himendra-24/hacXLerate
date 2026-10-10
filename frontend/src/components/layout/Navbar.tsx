@@ -23,11 +23,11 @@ export const Navbar: React.FC = () => {
             </div>
           </Link>
 
-          {/* Center Navigation Links matching reference */}
-          <nav className="hidden md:flex items-center gap-8">
+          {/* Center Navigation Links */}
+          <nav className="hidden md:flex items-center gap-7">
             <Link
               to="/discover"
-              className={`text-sm font-medium transition-colors ${
+              className={`text-xs font-semibold uppercase tracking-wider transition-colors ${
                 location.pathname === '/discover'
                   ? 'text-white'
                   : 'text-slate-400 hover:text-white'
@@ -37,34 +37,48 @@ export const Navbar: React.FC = () => {
             </Link>
             <Link
               to="/brief-builder"
-              className={`text-sm font-medium transition-colors ${
+              className={`text-xs font-semibold uppercase tracking-wider transition-colors ${
                 location.pathname === '/brief-builder'
                   ? 'text-white'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              For Brands
+              Brief Builder
+            </Link>
+            <Link
+              to="/brand-hub"
+              className={`text-xs font-semibold uppercase tracking-wider transition-colors ${
+                location.pathname === '/brand-hub'
+                  ? 'text-white'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Brand Hub
             </Link>
             <Link
               to="/studio"
-              className={`text-sm font-medium transition-colors ${
+              className={`text-xs font-semibold uppercase tracking-wider transition-colors ${
                 location.pathname === '/studio'
                   ? 'text-white'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              For Creators
+              Creator Studio
             </Link>
-            <a
-              href="#how-it-works"
-              className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
+            <Link
+              to="/engagements"
+              className={`text-xs font-semibold uppercase tracking-wider transition-colors ${
+                location.pathname.startsWith('/engagements')
+                  ? 'text-white'
+                  : 'text-slate-400 hover:text-white'
+              }`}
             >
-              How It Works
-            </a>
+              Delivery Room
+            </Link>
           </nav>
 
           {/* Right Action Buttons */}
-          <div className="hidden md:flex items-center gap-5">
+          <div className="hidden md:flex items-center gap-4">
             <Link
               to="/discover"
               className="p-2 text-slate-400 hover:text-white transition-colors"
@@ -74,10 +88,13 @@ export const Navbar: React.FC = () => {
             </Link>
 
             <Link
-              to="/studio"
-              className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
+              to="/shortlist"
+              className="p-2 text-slate-400 hover:text-white transition-colors"
+              title="View Shortlist"
             >
-              Sign In
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-charcoal-900 border border-charcoal-800 text-slate-300 hover:text-white">
+                Shortlist
+              </span>
             </Link>
 
             <Link

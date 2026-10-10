@@ -1,10 +1,11 @@
 import datetime
 from sqlalchemy.orm import Session
-from app.models.models import User, CreatorProfile, PortfolioProject, VerificationRecord, Brief
+from app.models.models import User, CreatorProfile, PortfolioProject, VerificationRecord, Brief, Engagement, Submission, Message, Review
 
 def seed_database(db: Session):
     # Check if already seeded
     if db.query(CreatorProfile).count() > 0:
+        _seed_reviews_and_engagements(db)
         return
 
     print("[SeedData] Seeding 12 diverse sample creators with full workflow recipes and evidence records...")
@@ -543,3 +544,199 @@ def seed_database(db: Session):
     db.add(sample_brief_2)
     db.commit()
     print("[SeedData] Successfully seeded 12 creators and 2 sample briefs.")
+    _seed_reviews_and_engagements(db)
+
+
+def _seed_reviews_and_engagements(db: Session):
+    # Check if reviews already exist
+    if db.query(Review).count() == 0:
+        print("[SeedData] Seeding verified client reviews for creators...")
+        creators_by_name = {c.display_name: c for c in db.query(CreatorProfile).all()}
+
+        # Elena Rostova
+        elena = creators_by_name.get("Elena Rostova")
+        if elena:
+            r1 = Review(
+                creator_id=elena.id,
+                brand_name="Hyperion Mobility",
+                brand_avatar="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100",
+                rating=5.0,
+                delivery_speed_rating=5.0,
+                workflow_transparency_rating=5.0,
+                communication_rating=4.9,
+                comment="Delivered an extraordinary commercial spec on time. ACES color grading and motion stability were flawless. Highly recommended!",
+                project_title="Aura Electric EV Teaser",
+                created_at=datetime.datetime.utcnow() - datetime.timedelta(days=12)
+            )
+            r2 = Review(
+                creator_id=elena.id,
+                brand_name="Verve Haute Studio",
+                brand_avatar="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100",
+                rating=4.9,
+                delivery_speed_rating=4.8,
+                workflow_transparency_rating=5.0,
+                communication_rating=5.0,
+                comment="Top-tier prompt craft and workflow transparency. Provided clean DaVinci timelines and custom motion brush setups.",
+                project_title="Solstice Haute Couture",
+                created_at=datetime.datetime.utcnow() - datetime.timedelta(days=5)
+            )
+            db.add_all([r1, r2])
+            elena.rating_avg = 5.0
+            elena.reviews_count = 2
+
+        # Ananya Roy
+        ananya = creators_by_name.get("Ananya Roy")
+        if ananya:
+            r = Review(
+                creator_id=ananya.id,
+                brand_name="Volt Athletics Global",
+                brand_avatar="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100",
+                rating=5.0,
+                delivery_speed_rating=5.0,
+                workflow_transparency_rating=5.0,
+                communication_rating=4.8,
+                comment="The kinetic water splash and sneaker CGI exceeded expectations. 9:16 vertical cuts performed 3.2x higher on Meta ads.",
+                project_title="Apex Surge Zero-Gravity Sneaker",
+                created_at=datetime.datetime.utcnow() - datetime.timedelta(days=8)
+            )
+            db.add(r)
+            ananya.rating_avg = 5.0
+            ananya.reviews_count = 1
+
+        # Dev Malhotra
+        dev = creators_by_name.get("Dev Malhotra")
+        if dev:
+            r = Review(
+                creator_id=dev.id,
+                brand_name="Maison Florale",
+                brand_avatar="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100",
+                rating=4.9,
+                delivery_speed_rating=4.9,
+                workflow_transparency_rating=5.0,
+                communication_rating=4.9,
+                comment="Hyper-realistic skin textures and organic petals without AI plastic distortion. Remarkable attention to detail.",
+                project_title="Botanica Scent Campaign",
+                created_at=datetime.datetime.utcnow() - datetime.timedelta(days=15)
+            )
+            db.add(r)
+            dev.rating_avg = 4.9
+            dev.reviews_count = 1
+
+        # Mira Shah
+        mira = creators_by_name.get("Mira Shah")
+        if mira:
+            r = Review(
+                creator_id=mira.id,
+                brand_name="Nexus Gaming Universe",
+                brand_avatar="https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=100",
+                rating=4.8,
+                delivery_speed_rating=4.7,
+                workflow_transparency_rating=5.0,
+                communication_rating=4.8,
+                comment="Sci-fi portal VFX with seamless camera track. Delivered ComfyUI recipe with complete LoRA weights and workflow JSON.",
+                project_title="Singularity Portal VFX",
+                created_at=datetime.datetime.utcnow() - datetime.timedelta(days=20)
+            )
+            db.add(r)
+            mira.rating_avg = 4.8
+            mira.reviews_count = 1
+
+        db.commit()
+
+    # Check if sample engagement already exists
+    if db.query(Engagement).count() == 0:
+        brief = db.query(Brief).first()
+        elena = db.query(CreatorProfile).filter(CreatorProfile.display_name == "Elena Rostova").first()
+
+        if brief and elena:
+            print("[SeedData] Seeding active demo engagement with submissions and chat history...")
+            eng = Engagement(
+                brief_id=brief.id,
+                creator_id=elena.id,
+                status="in_progress",
+                agreed_terms={
+                    "budget": 3500,
+                    "deadline": "2026-11-15",
+                    "commercial_scope": "Full Commercial (Digital & Broadcast)",
+                    "revision_limit": 2
+                },
+                created_at=datetime.datetime.utcnow() - datetime.timedelta(days=3)
+            )
+            db.add(eng)
+            db.flush()
+
+            # Seed submissions v1 and v2
+            sub1 = Submission(
+                engagement_id=eng.id,
+                version_number=1,
+                media_url="https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1200&q=80",
+                creator_note="Draft v1 with rough audio sync and ACES base pass.",
+                brand_feedback="Camera motion is awesome. Please brighten the rim lights on the front headlights in the rain sequence.",
+                status="revision_requested",
+                created_at=datetime.datetime.utcnow() - datetime.timedelta(days=2)
+            )
+            sub2 = Submission(
+                engagement_id=eng.id,
+                version_number=2,
+                media_url="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80",
+                creator_note="v2 revision with enhanced headlight rim glow, 4K Topaz super-sampling, and final synth audio master.",
+                brand_feedback=None,
+                status="pending",
+                created_at=datetime.datetime.utcnow() - datetime.timedelta(hours=6)
+            )
+            db.add_all([sub1, sub2])
+
+            # Seed chat messages
+            m1 = Message(
+                engagement_id=eng.id,
+                sender_id="brand_demo_user",
+                sender_name="Acme Mobility Brand Lead",
+                sender_role="brand",
+                recipient_id=elena.id,
+                recipient_name=elena.display_name,
+                content="Hi Elena! Thrilled to kick off the Zenith Quantum EV reveal campaign. Your automotive reel was stunning.",
+                created_at=datetime.datetime.utcnow() - datetime.timedelta(days=3)
+            )
+            m2 = Message(
+                engagement_id=eng.id,
+                sender_id=elena.id,
+                sender_name=elena.display_name,
+                sender_role="creator",
+                recipient_id="brand_demo_user",
+                recipient_name="Acme Mobility Brand Lead",
+                content="Thanks so much! I've started the Midjourney v6 keyframe sequence and Runway Gen-3 motion passes. Target aspect ratio is 16:9 with 9:16 cuts.",
+                created_at=datetime.datetime.utcnow() - datetime.timedelta(days=2, hours=18)
+            )
+            m3 = Message(
+                engagement_id=eng.id,
+                sender_id=elena.id,
+                sender_name=elena.display_name,
+                sender_role="creator",
+                recipient_id="brand_demo_user",
+                recipient_name="Acme Mobility Brand Lead",
+                content="Submitted v1 draft for review! Let me know your thoughts on the headlight glow and rain reflections.",
+                created_at=datetime.datetime.utcnow() - datetime.timedelta(days=2)
+            )
+            m4 = Message(
+                engagement_id=eng.id,
+                sender_id="brand_demo_user",
+                sender_name="Acme Mobility Brand Lead",
+                sender_role="brand",
+                recipient_id=elena.id,
+                recipient_name=elena.display_name,
+                content="Looking incredible! Added feedback to slightly lift the rim lighting in the 0:15 mark.",
+                created_at=datetime.datetime.utcnow() - datetime.timedelta(days=1)
+            )
+            m5 = Message(
+                engagement_id=eng.id,
+                sender_id=elena.id,
+                sender_name=elena.display_name,
+                sender_role="creator",
+                recipient_id="brand_demo_user",
+                recipient_name="Acme Mobility Brand Lead",
+                content="Done! Just submitted v2 with the rim lighting boosted and 4K super-sampling.",
+                created_at=datetime.datetime.utcnow() - datetime.timedelta(hours=5)
+            )
+            db.add_all([m1, m2, m3, m4, m5])
+            db.commit()
+

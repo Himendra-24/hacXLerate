@@ -2,18 +2,20 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { CreatorProfile } from '../../types';
 import { Badge } from '../ui/Badge';
-import { Bookmark, Sparkles, ArrowRight, ShieldCheck, DollarSign, Layers } from 'lucide-react';
+import { Bookmark, Sparkles, ArrowRight, ShieldCheck, DollarSign, Layers, Star, MessageSquare } from 'lucide-react';
 
 interface CreatorCardProps {
   creator: CreatorProfile;
   isShortlisted?: boolean;
   onToggleShortlist?: (creatorId: string) => void;
+  onMessage?: (creator: CreatorProfile) => void;
 }
 
 export const CreatorCard: React.FC<CreatorCardProps> = ({
   creator,
   isShortlisted = false,
   onToggleShortlist,
+  onMessage,
 }) => {
   const primaryProject = creator.portfolio_projects?.[0];
   const isDemo = creator.verification_records?.some((v) => v.demo_only);
@@ -100,9 +102,16 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
                 className="w-11 h-11 rounded-full object-cover border border-charcoal-700 ring-2 ring-electric-600/20"
               />
               <div>
-                <h3 className="font-display font-bold text-white text-base group-hover:text-electric-400 transition-colors">
-                  {creator.display_name}
-                </h3>
+                <div className="flex items-center gap-1.5">
+                  <h3 className="font-display font-bold text-white text-base group-hover:text-electric-400 transition-colors">
+                    {creator.display_name}
+                  </h3>
+                  <div className="flex items-center gap-0.5 text-amber-400 text-xs font-semibold">
+                    <Star className="w-3 h-3 fill-current" />
+                    <span>{creator.rating_avg ? creator.rating_avg.toFixed(1) : '5.0'}</span>
+                    <span className="text-[10px] text-slate-500">({creator.reviews_count || 1})</span>
+                  </div>
+                </div>
                 <p className="text-xs text-slate-400 line-clamp-1">{creator.title}</p>
               </div>
             </div>
@@ -150,7 +159,7 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
         </div>
 
         {/* Rates & CTA Footer */}
-        <div className="pt-3 border-t border-charcoal-800 flex items-center justify-between">
+        <div className="pt-3 border-t border-charcoal-800 flex items-center justify-between gap-2">
           <div>
             <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Rate Range</span>
             <span className="text-xs font-semibold text-slate-200">
@@ -158,13 +167,26 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
             </span>
           </div>
 
-          <Link
-            to={`/creators/${creator.id}`}
-            className="flex items-center gap-1.5 text-xs font-medium text-electric-400 hover:text-white px-3 py-1.5 rounded-lg bg-charcoal-800 hover:bg-electric-600 transition-all"
-          >
-            <span>View Proof</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          <div className="flex items-center gap-1.5">
+            {onMessage && (
+              <button
+                type="button"
+                onClick={() => onMessage(creator)}
+                className="p-1.5 rounded-lg bg-charcoal-800 hover:bg-charcoal-700 text-slate-300 hover:text-white transition-all border border-charcoal-700/60"
+                title={`Message ${creator.display_name}`}
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+              </button>
+            )}
+
+            <Link
+              to={`/creators/${creator.id}`}
+              className="flex items-center gap-1.5 text-xs font-medium text-electric-400 hover:text-white px-3 py-1.5 rounded-lg bg-charcoal-800 hover:bg-electric-600 transition-all border border-charcoal-700/60"
+            >
+              <span>View Proof</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
         </div>
 
       </div>

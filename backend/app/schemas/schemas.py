@@ -56,6 +56,30 @@ class VerificationRecordResponse(VerificationRecordBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+# ==================== REVIEW SCHEMAS ====================
+
+class ReviewBase(BaseModel):
+    creator_id: str
+    engagement_id: Optional[str] = None
+    brand_name: str
+    brand_avatar: Optional[str] = None
+    rating: float = 5.0
+    delivery_speed_rating: float = 5.0
+    workflow_transparency_rating: float = 5.0
+    communication_rating: float = 5.0
+    comment: str
+    project_title: Optional[str] = None
+
+class ReviewCreate(ReviewBase):
+    pass
+
+class ReviewResponse(ReviewBase):
+    id: str
+    created_at: datetime.datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 # ==================== CREATOR SCHEMAS ====================
 
 class CreatorProfileBase(BaseModel):
@@ -69,6 +93,8 @@ class CreatorProfileBase(BaseModel):
     tools: List[str] = []
     rate_min: Optional[float] = None
     rate_max: Optional[float] = None
+    rating_avg: float = 4.9
+    reviews_count: int = 1
     availability_status: str = "Available"
     featured: bool = False
 
@@ -86,6 +112,8 @@ class CreatorProfileUpdate(BaseModel):
     tools: Optional[List[str]] = None
     rate_min: Optional[float] = None
     rate_max: Optional[float] = None
+    rating_avg: Optional[float] = None
+    reviews_count: Optional[int] = None
     availability_status: Optional[str] = None
 
 class CreatorProfileResponse(CreatorProfileBase):
@@ -95,6 +123,7 @@ class CreatorProfileResponse(CreatorProfileBase):
     updated_at: datetime.datetime
     portfolio_projects: List[PortfolioProjectResponse] = []
     verification_records: List[VerificationRecordResponse] = []
+    reviews: List[ReviewResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -243,6 +272,54 @@ class EngagementUpdate(BaseModel):
     status: Optional[str] = None # "invited", "in_progress", "revision_requested", "approved", "delivered"
     agreed_terms: Optional[Dict[str, Any]] = None
 
+# ==================== MESSAGE SCHEMAS ====================
+
+class MessageBase(BaseModel):
+    engagement_id: Optional[str] = None
+    sender_id: str
+    sender_name: str
+    sender_role: str = "brand"  # "brand" or "creator"
+    recipient_id: str
+    recipient_name: str
+    content: str
+    attachment_url: Optional[str] = None
+    attachment_name: Optional[str] = None
+
+class MessageCreate(MessageBase):
+    pass
+
+class MessageResponse(MessageBase):
+    id: str
+    is_read: bool = False
+    created_at: datetime.datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class MessageThreadSummary(BaseModel):
+    partner_id: str
+    partner_name: str
+    partner_role: str
+    last_message: str
+    last_message_at: datetime.datetime
+    unread_count: int
+    engagement_id: Optional[str] = None
+
+
+# ==================== ASSET UPLOAD SCHEMAS ====================
+
+class AssetUploadResponse(BaseModel):
+    id: str
+    filename: str
+    original_filename: str
+    file_type: str
+    file_size_bytes: int
+    url: str
+    uploader_role: str
+    created_at: datetime.datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class EngagementResponse(BaseModel):
     id: str
     brief_id: str
@@ -254,5 +331,8 @@ class EngagementResponse(BaseModel):
     brief: Optional[BriefResponse] = None
     creator: Optional[CreatorProfileResponse] = None
     submissions: List[SubmissionResponse] = []
+    messages: List[MessageResponse] = []
+    review: Optional[ReviewResponse] = None
 
     model_config = ConfigDict(from_attributes=True)
+

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Engagement, Submission } from '../types';
+import { Engagement, Submission, Message } from '../types';
 import { api } from '../services/api';
 import { EngagementTimeline } from '../components/engagements/EngagementTimeline';
 import { SubmissionVersionCard } from '../components/engagements/SubmissionVersionCard';
 import { CommercialTermsSummary } from '../components/engagements/CommercialTermsSummary';
+import { ReviewModal } from '../components/engagements/ReviewModal';
 import { Modal } from '../components/ui/Modal';
 import {
   FolderCheck,
@@ -16,7 +17,10 @@ import {
   Send,
   Loader2,
   Sparkles,
-  ShieldCheck
+  ShieldCheck,
+  Star,
+  MessageSquare,
+  Paperclip
 } from 'lucide-react';
 
 export const EngagementDetailPage: React.FC = () => {
@@ -29,6 +33,7 @@ export const EngagementDetailPage: React.FC = () => {
 
   // New Submission Modal State
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [newSubmissionMedia, setNewSubmissionMedia] = useState(
     'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1200&q=80'
   );
@@ -36,6 +41,13 @@ export const EngagementDetailPage: React.FC = () => {
     'Attached draft render v2 with revised color grading and speed ramps.'
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+
+  // Live Chat State
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [isSendingChat, setIsSendingChat] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -45,6 +57,10 @@ export const EngagementDetailPage: React.FC = () => {
       if (all.length > 0) {
         const found = id ? all.find((e) => e.id === id) || all[0] : all[0];
         setCurrentEngagement(found);
+        if (found) {
+          const msgs = await api.getEngagementMessages(found.id);
+          setMessages(msgs);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -56,6 +72,30 @@ export const EngagementDetailPage: React.FC = () => {
   useEffect(() => {
     loadData();
   }, [id]);
+
+  const handleSendChatMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim() || !currentEngagement || isSendingChat) return;
+
+    setIsSendingChat(true);
+    try {
+      const newMsg = await api.sendMessage({
+        engagement_id: currentEngagement.id,
+        sender_id: 'brand_demo_user',
+        sender_name: 'Acme Brand Lead',
+        sender_role: 'brand',
+        recipient_id: currentEngagement.creator_id,
+        recipient_name: currentEngagement.creator?.display_name || 'Creator',
+        content: chatInput.trim(),
+      });
+      setMessages((prev) => [...prev, newMsg]);
+      setChatInput('');
+    } catch (err) {
+      console.error('Failed to send project message:', err);
+    } finally {
+      setIsSendingChat(false);
+    }
+  };
 
   const handleProvideFeedback = async (submissionId: string, feedback: string, status: string) => {
     if (!currentEngagement) return;
@@ -72,11 +112,21 @@ export const EngagementDetailPage: React.FC = () => {
 
   const handleUploadSubmission = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentEngagement || !newSubmissionMedia.trim()) return;
+    if (!currentEngagement) return;
     setIsSubmitting(true);
     try {
-      await api.addSubmission(currentEngagement.id, newSubmissionMedia, newSubmissionNotes);
+      let mediaUrl = newSubmissionMedia.trim();
+      if (uploadedFile) {
+        setIsUploadingFile(true);
+        const uploaded = await api.uploadFile(uploadedFile, 'creator', 'video');
+        mediaUrl = uploaded.url;
+        setIsUploadingFile(false);
+      }
+      if (!mediaUrl) return;
+
+      await api.addSubmission(currentEngagement.id, mediaUrl, newSubmissionNotes);
       setUploadModalOpen(false);
+      setUploadedFile(null);
       const refreshed = await api.getEngagement(currentEngagement.id);
       setCurrentEngagement(refreshed);
     } catch (err) {
@@ -84,6 +134,7 @@ export const EngagementDetailPage: React.FC = () => {
       alert('Failed to submit revision.');
     } finally {
       setIsSubmitting(false);
+      setIsUploadingFile(false);
     }
   };
 
@@ -184,6 +235,15 @@ export const EngagementDetailPage: React.FC = () => {
                 <span>Submit Deliverable (v{(currentEngagement.submissions?.length || 0) + 1})</span>
               </button>
 
+              {/* Review Creator Action */}
+              <button
+                onClick={() => setReviewModalOpen(true)}
+                className="px-4 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-semibold border border-amber-500/40 flex items-center gap-1.5 transition-all"
+              >
+                <Star className="w-3.5 h-3.5 fill-current" />
+                <span>Review Creator</span>
+              </button>
+
               {/* Status progression shortcuts */}
               {currentEngagement.status === 'approved' && (
                 <button
@@ -234,6 +294,69 @@ export const EngagementDetailPage: React.FC = () => {
             )}
           </div>
 
+          {/* Live Project Chat Room */}
+          <div className="p-6 rounded-3xl bg-charcoal-900 border border-charcoal-800 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-charcoal-800">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-electric-400" />
+                <h3 className="font-display font-bold text-white text-base">
+                  Project Discussion & Revisions Room
+                </h3>
+              </div>
+              <span className="text-xs text-slate-400">Live Brand ↔ Creator Dialogue</span>
+            </div>
+
+            {/* Messages List */}
+            <div className="max-h-72 overflow-y-auto space-y-3 pr-2 scrollbar-thin">
+              {messages.length === 0 ? (
+                <div className="py-6 text-center text-xs text-slate-500">
+                  No messages yet. Send a note to align on creative direction.
+                </div>
+              ) : (
+                messages.map((m) => {
+                  const isBrand = m.sender_role === 'brand';
+                  return (
+                    <div key={m.id} className={`flex flex-col ${isBrand ? 'items-end' : 'items-start'}`}>
+                      <div className="flex items-center gap-1.5 mb-1 px-1 text-[10px] text-slate-500">
+                        <span className="font-semibold text-slate-400">{m.sender_name}</span>
+                        <span>•</span>
+                        <span>{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                      <div
+                        className={`max-w-[75%] rounded-2xl p-3 text-xs leading-relaxed ${
+                          isBrand
+                            ? 'bg-electric-600 text-white rounded-br-none shadow-glow-violet'
+                            : 'bg-charcoal-800 text-slate-200 rounded-bl-none border border-charcoal-700/60'
+                        }`}
+                      >
+                        <p className="whitespace-pre-wrap">{m.content}</p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Message Input Form */}
+            <form onSubmit={handleSendChatMessage} className="flex items-center gap-2 pt-2 border-t border-charcoal-800">
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Type a revision note, feedback, or question..."
+                className="flex-1 bg-charcoal-950 border border-charcoal-800 focus:border-electric-500 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={!chatInput.trim() || isSendingChat}
+                className="px-4 py-2.5 rounded-xl bg-electric-600 hover:bg-electric-500 text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-all shadow-glow-violet"
+              >
+                {isSendingChat ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                <span>Send</span>
+              </button>
+            </form>
+          </div>
+
           {/* Recorded Commercial Terms Summary Card */}
           <CommercialTermsSummary terms={currentEngagement.agreed_terms || {}} />
 
@@ -271,10 +394,33 @@ export const EngagementDetailPage: React.FC = () => {
       >
         <form onSubmit={handleUploadSubmission} className="space-y-4 text-xs">
           <div>
-            <label className="text-slate-300 block mb-1 font-medium">Deliverable Media URL *</label>
+            <label className="text-slate-300 block mb-1 font-medium">Upload File (MP4, PNG, JPG, JSON)</label>
+            <div className="p-4 border-2 border-dashed border-charcoal-700 hover:border-electric-500 rounded-xl bg-charcoal-950/50 text-center cursor-pointer transition-all">
+              <input
+                type="file"
+                id="deliverable-file"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) setUploadedFile(f);
+                }}
+              />
+              <label htmlFor="deliverable-file" className="cursor-pointer block">
+                <Upload className="w-6 h-6 text-electric-400 mx-auto mb-1.5" />
+                <span className="text-slate-200 font-semibold block">
+                  {uploadedFile ? uploadedFile.name : 'Click to select render output from disk'}
+                </span>
+                <span className="text-[10px] text-slate-500">
+                  {uploadedFile ? `${(uploadedFile.size / (1024 * 1024)).toFixed(2)} MB selected` : 'Supports MP4, MOV, WebM, PNG, LoRA weights, ComfyUI JSON'}
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-slate-300 block mb-1 font-medium">Or Provide External Media URL</label>
             <input
               type="url"
-              required
               value={newSubmissionMedia}
               onChange={(e) => setNewSubmissionMedia(e.target.value)}
               placeholder="https://images.unsplash.com/..."
@@ -303,15 +449,34 @@ export const EngagementDetailPage: React.FC = () => {
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !newSubmissionMedia.trim()}
+              disabled={isSubmitting || isUploadingFile || (!newSubmissionMedia.trim() && !uploadedFile)}
               className="px-5 py-2 rounded-xl bg-electric-600 hover:bg-electric-500 text-white font-semibold shadow-glow-violet transition-all flex items-center gap-1.5 disabled:opacity-50"
             >
-              {isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+              {isSubmitting || isUploadingFile ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Upload className="w-3.5 h-3.5" />
+              )}
               <span>Upload Version</span>
             </button>
           </div>
         </form>
       </Modal>
+
+      {/* Review Modal */}
+      {currentEngagement && currentEngagement.creator && (
+        <ReviewModal
+          isOpen={reviewModalOpen}
+          onClose={() => setReviewModalOpen(false)}
+          creatorId={currentEngagement.creator_id}
+          creatorName={currentEngagement.creator.display_name}
+          engagementId={currentEngagement.id}
+          projectTitle={currentEngagement.brief?.title}
+          onReviewSubmitted={() => {
+            loadData();
+          }}
+        />
+      )}
 
     </div>
   );

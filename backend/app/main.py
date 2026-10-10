@@ -5,7 +5,13 @@ from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.core.database import Base, engine, SessionLocal
 from app.services.seed_data import seed_database
-from app.api import creators, briefs, matches, shortlist, engagements
+import os
+from fastapi.staticfiles import StaticFiles
+from app.api import creators, briefs, matches, shortlist, engagements, messages, reviews, uploads
+
+# Ensure uploads directory exists
+UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 def init_db():
     Base.metadata.create_all(bind=engine)
@@ -36,6 +42,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Static file serving for asset uploads
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+
 # Mount API routers
 api_prefix = settings.API_V1_STR
 app.include_router(creators.router, prefix=api_prefix)
@@ -43,6 +52,9 @@ app.include_router(briefs.router, prefix=api_prefix)
 app.include_router(matches.router, prefix=api_prefix)
 app.include_router(shortlist.router, prefix=api_prefix)
 app.include_router(engagements.router, prefix=api_prefix)
+app.include_router(messages.router, prefix=api_prefix)
+app.include_router(reviews.router, prefix=api_prefix)
+app.include_router(uploads.router, prefix=api_prefix)
 
 from fastapi import Depends
 from app.core.database import get_db
