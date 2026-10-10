@@ -1,99 +1,163 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, Shield, Info, ArrowUpRight } from 'lucide-react';
+import { Sparkles, ArrowRight, Check } from 'lucide-react';
 
 export const Footer: React.FC = () => {
+  const [email, setEmail] = useState('');
+  const [subscribed, setSubscribed] = useState(false);
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email.trim()) {
+      setSubscribed(true);
+      setEmail('');
+    }
+  };
+
   return (
-    <footer className="bg-charcoal-950 border-t border-charcoal-800/80 text-slate-400 text-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer className="bg-white text-slate-600 border-t border-slate-200 font-sans text-xs">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10">
           
-          {/* Brand info */}
-          <div className="md:col-span-2 space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-electric-600 flex items-center justify-center text-white">
-                <Sparkles className="w-4 h-4" />
+          {/* Brand Info */}
+          <div className="lg:col-span-2 space-y-4">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-[#6366F1] to-[#8B5CF6] flex items-center justify-center text-white">
+                <Sparkles className="w-3.5 h-3.5" />
               </div>
-              <span className="font-display font-bold text-white text-base">Cre8Match AI</span>
-            </div>
-            <p className="text-slate-400 text-xs leading-relaxed max-w-md">
-              The AI Content Creator Marketplace powered by <strong>Creative Fit Intelligence</strong>. 
-              We connect brand briefs with demonstrated creator capabilities, verifiable workflow recipes, and honest licensing evidence.
-            </p>
-            <div className="flex items-center gap-2 text-[11px] text-amber-400/90 bg-amber-950/20 border border-amber-900/40 p-2.5 rounded-lg max-w-md">
-              <Info className="w-4 h-4 shrink-0" />
-              <span>
-                <strong>Evaluation Sandbox:</strong> Sample creator scores, portfolios, and verification records are simulated for the Kampus.VC demo.
+              <span className="font-display font-bold text-slate-900 text-lg">
+                Cre8Match<span className="text-[#6366F1]">.AI</span>
               </span>
+            </Link>
+
+            <p className="text-slate-500 text-xs leading-relaxed max-w-sm">
+              The AI creator marketplace.  
+              The right creative. The right proof. The right match.
+            </p>
+
+            {/* Social Icons */}
+            <div className="flex items-center gap-3 pt-2 text-slate-400">
+              <a href="#twitter" className="hover:text-slate-900 transition-colors font-bold text-xs">𝕏</a>
+              <a href="#linkedin" className="hover:text-slate-900 transition-colors font-bold text-xs">in</a>
+              <a href="#instagram" className="hover:text-slate-900 transition-colors font-bold text-xs">ig</a>
+              <a href="#youtube" className="hover:text-slate-900 transition-colors font-bold text-xs">yt</a>
             </div>
           </div>
 
-          {/* Core Flows */}
-          <div>
-            <h4 className="text-slate-200 font-semibold mb-3 tracking-wide uppercase text-[11px]">Product Flows</h4>
-            <ul className="space-y-2">
+          {/* For Brands */}
+          <div className="space-y-3">
+            <h4 className="text-slate-900 font-semibold text-xs tracking-tight">For Brands</h4>
+            <ul className="space-y-2.5">
               <li>
-                <Link to="/discover" className="hover:text-white transition-colors flex items-center gap-1">
-                  Discover AI Creators <ArrowUpRight className="w-3 h-3 text-slate-500" />
+                <Link to="/brief-builder" className="hover:text-slate-900 transition-colors">
+                  Post a Brief
                 </Link>
               </li>
               <li>
-                <Link to="/brief-builder" className="hover:text-white transition-colors flex items-center gap-1">
-                  AI Creative Brief Builder <ArrowUpRight className="w-3 h-3 text-slate-500" />
+                <Link to="/discover" className="hover:text-slate-900 transition-colors">
+                  Find Creators
                 </Link>
               </li>
               <li>
-                <Link to="/shortlist" className="hover:text-white transition-colors flex items-center gap-1">
-                  Shortlist & Comparison <ArrowUpRight className="w-3 h-3 text-slate-500" />
-                </Link>
+                <a href="#how-it-works" className="hover:text-slate-900 transition-colors">
+                  How It Works
+                </a>
               </li>
               <li>
-                <Link to="/engagements" className="hover:text-white transition-colors flex items-center gap-1">
-                  Revisions & Final Delivery <ArrowUpRight className="w-3 h-3 text-slate-500" />
-                </Link>
-              </li>
-              <li>
-                <Link to="/studio" className="hover:text-white transition-colors flex items-center gap-1">
-                  Creator Studio & Recipes <ArrowUpRight className="w-3 h-3 text-slate-500" />
+                <Link to="/brief-builder" className="hover:text-slate-900 transition-colors">
+                  Pricing
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Verification & Pillars */}
-          <div>
-            <h4 className="text-slate-200 font-semibold mb-3 tracking-wide uppercase text-[11px]">Creative Fit Pillars</h4>
-            <ul className="space-y-2 text-slate-400">
-              <li className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-electric-500"></span>
-                <span>Deterministic 4-Factor Matching</span>
+          {/* For Creators */}
+          <div className="space-y-3">
+            <h4 className="text-slate-900 font-semibold text-xs tracking-tight">For Creators</h4>
+            <ul className="space-y-2.5">
+              <li>
+                <Link to="/studio" className="hover:text-slate-900 transition-colors">
+                  Create a Portfolio
+                </Link>
               </li>
-              <li className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                <span>Evidence-Backed Workflow Recipes</span>
+              <li>
+                <Link to="/discover" className="hover:text-slate-900 transition-colors">
+                  Verification
+                </Link>
               </li>
-              <li className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                <span>Commercial Rights Clarity</span>
+              <li>
+                <Link to="/studio" className="hover:text-slate-900 transition-colors">
+                  Creator Resources
+                </Link>
               </li>
-              <li className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
-                <span>Format & Aspect Ratio Gating</span>
+              <li>
+                <Link to="/discover" className="hover:text-slate-900 transition-colors">
+                  Success Stories
+                </Link>
               </li>
             </ul>
+          </div>
+
+          {/* Company */}
+          <div className="space-y-3">
+            <h4 className="text-slate-900 font-semibold text-xs tracking-tight">Company</h4>
+            <ul className="space-y-2.5">
+              <li>
+                <a href="#about" className="hover:text-slate-900 transition-colors">About</a>
+              </li>
+              <li>
+                <a href="#contact" className="hover:text-slate-900 transition-colors">Contact</a>
+              </li>
+              <li>
+                <a href="#careers" className="hover:text-slate-900 transition-colors">Careers</a>
+              </li>
+              <li>
+                <a href="#privacy" className="hover:text-slate-900 transition-colors">Privacy Policy</a>
+              </li>
+              <li>
+                <a href="#terms" className="hover:text-slate-900 transition-colors">Terms of Service</a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Stay in the Loop */}
+          <div className="space-y-3">
+            <h4 className="text-slate-900 font-semibold text-xs tracking-tight">Stay in the loop</h4>
+            <p className="text-slate-500 text-xs">
+              Get product updates and creator stories.
+            </p>
+
+            <form onSubmit={handleSubscribe} className="flex items-center gap-1.5 pt-1">
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#6366F1]"
+              />
+              <button
+                type="submit"
+                className="p-2 rounded-lg bg-[#6366F1] hover:bg-[#4F46E5] text-white shrink-0 transition-colors"
+                title="Subscribe"
+              >
+                {subscribed ? <Check className="w-3.5 h-3.5 text-white" /> : <ArrowRight className="w-3.5 h-3.5" />}
+              </button>
+            </form>
+            {subscribed && (
+              <span className="text-[11px] text-emerald-600 block">Thank you for subscribing!</span>
+            )}
           </div>
 
         </div>
 
-        <div className="mt-12 pt-6 border-t border-charcoal-850 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
+        {/* Bottom Bar */}
+        <div className="mt-16 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-400">
           <div>
-            © 2026 Cre8Match AI. Built for Kampus.VC AI Content Creator Marketplace Hackathon.
+            © 2026 Cre8Match AI. All rights reserved.
           </div>
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1 text-slate-400">
-              <Shield className="w-3.5 h-3.5 text-electric-400" />
-              Creative Fit Intelligence™ Engine
-            </span>
+          <div>
+            Built for a more creative tomorrow.
           </div>
         </div>
       </div>

@@ -1,106 +1,157 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Sparkles, Compass, FileText, Bookmark, FolderCheck, Wand2, ShieldCheck, User } from 'lucide-react';
+import { Sparkles, Search, ArrowRight, Menu, X } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const location = useLocation();
-
-  const navLinks = [
-    { to: '/', label: 'Home', icon: null },
-    { to: '/discover', label: 'Discover Creators', icon: Compass },
-    { to: '/brief-builder', label: 'AI Brief Builder', icon: Wand2 },
-    { to: '/shortlist', label: 'Shortlist', icon: Bookmark },
-    { to: '/engagements', label: 'Engagements & Delivery', icon: FolderCheck },
-    { to: '/studio', label: 'Creator Studio', icon: User },
-  ];
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-charcoal-950/85 backdrop-blur-md border-b border-charcoal-800">
+    <header className="sticky top-0 z-50 bg-[#0B0C10]/95 backdrop-blur-md border-b border-white/[0.08]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           
-          {/* Logo & Tagline */}
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-electric-700 to-electric-500 flex items-center justify-center text-white shadow-glow-violet group-hover:scale-105 transition-transform">
-              <Sparkles className="w-5 h-5" />
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#6366F1] to-[#8B5CF6] flex items-center justify-center text-white shadow-glow-violet group-hover:scale-105 transition-transform">
+              <Sparkles className="w-4 h-4" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-display font-bold text-lg tracking-tight text-white group-hover:text-electric-400 transition-colors">
-                  Cre8Match<span className="text-electric-500">.AI</span>
-                </span>
-                <span className="hidden sm:inline-block text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-electric-950/80 border border-electric-700/50 text-electric-300">
-                  Kampus.VC MVP
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 hidden md:block">
-                The right creative. The right proof. The right match.
-              </p>
+            <div className="flex items-baseline">
+              <span className="font-display font-bold text-xl tracking-tight text-white">
+                Cre8Match<span className="text-[#818CF8]">.AI</span>
+              </span>
             </div>
           </Link>
 
-          {/* Center Navigation */}
-          <nav className="hidden lg:flex items-center gap-1">
-            {navLinks.map((link) => {
-              const isActive = location.pathname === link.to;
-              const Icon = link.icon;
-              return (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                    isActive
-                      ? 'text-white bg-charcoal-800 border border-charcoal-700'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-charcoal-900'
-                  }`}
-                >
-                  {Icon && <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-electric-400' : 'text-slate-500'}`} />}
-                  {link.label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Action CTAs */}
-          <div className="flex items-center gap-2.5">
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/40 border border-emerald-800/40 text-[11px] text-emerald-400">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Evidence Verified</span>
-            </div>
-
+          {/* Center Navigation Links matching reference */}
+          <nav className="hidden md:flex items-center gap-8">
+            <Link
+              to="/discover"
+              className={`text-sm font-medium transition-colors ${
+                location.pathname === '/discover'
+                  ? 'text-white'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Discover
+            </Link>
             <Link
               to="/brief-builder"
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-electric-600 hover:bg-electric-500 text-white text-xs font-semibold shadow-glow-violet transition-all active:scale-95"
+              className={`text-sm font-medium transition-colors ${
+                location.pathname === '/brief-builder'
+                  ? 'text-white'
+                  : 'text-slate-400 hover:text-white'
+              }`}
             >
-              <Wand2 className="w-3.5 h-3.5" />
-              <span>Build Brief</span>
+              For Brands
+            </Link>
+            <Link
+              to="/studio"
+              className={`text-sm font-medium transition-colors ${
+                location.pathname === '/studio'
+                  ? 'text-white'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              For Creators
+            </Link>
+            <a
+              href="#how-it-works"
+              className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
+            >
+              How It Works
+            </a>
+          </nav>
+
+          {/* Right Action Buttons */}
+          <div className="hidden md:flex items-center gap-5">
+            <Link
+              to="/discover"
+              className="p-2 text-slate-400 hover:text-white transition-colors"
+              title="Search Creators"
+            >
+              <Search className="w-4 h-4" />
             </Link>
 
             <Link
               to="/studio"
-              className="px-3 py-1.5 rounded-lg border border-charcoal-700 hover:border-charcoal-600 bg-charcoal-900 hover:bg-charcoal-800 text-slate-300 text-xs font-medium transition-all"
+              className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
             >
-              Creator Studio
+              Sign In
             </Link>
+
+            <Link
+              to="/brief-builder"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#6366F1] hover:bg-[#4F46E5] text-white text-xs font-semibold shadow-glow-violet transition-all active:scale-95"
+            >
+              <span>Get Started</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden flex items-center gap-2">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 text-slate-400 hover:text-white"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
 
         </div>
       </div>
-      
-      {/* Mobile Sub-Navigation */}
-      <div className="lg:hidden border-t border-charcoal-850 px-4 py-2 flex items-center gap-2 overflow-x-auto text-xs">
-        {navLinks.map((link) => (
+
+      {/* Mobile Menu Dropdown */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-white/[0.08] bg-[#0B0C10] px-4 pt-3 pb-6 space-y-3">
           <Link
-            key={link.to}
-            to={link.to}
-            className={`whitespace-nowrap px-2.5 py-1 rounded-md ${
-              location.pathname === link.to ? 'bg-electric-950 text-electric-300 border border-electric-700/50' : 'text-slate-400'
-            }`}
+            to="/discover"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block py-2 text-sm text-slate-300 hover:text-white"
           >
-            {link.label}
+            Discover Creators
           </Link>
-        ))}
-      </div>
+          <Link
+            to="/brief-builder"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block py-2 text-sm text-slate-300 hover:text-white"
+          >
+            For Brands (Brief Builder)
+          </Link>
+          <Link
+            to="/studio"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block py-2 text-sm text-slate-300 hover:text-white"
+          >
+            For Creators (Studio)
+          </Link>
+          <Link
+            to="/shortlist"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block py-2 text-sm text-slate-300 hover:text-white"
+          >
+            Shortlist
+          </Link>
+          <Link
+            to="/engagements"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block py-2 text-sm text-slate-300 hover:text-white"
+          >
+            Engagements & Delivery
+          </Link>
+          <div className="pt-2">
+            <Link
+              to="/brief-builder"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-full bg-[#6366F1] text-white text-xs font-semibold"
+            >
+              <span>Get Started</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
