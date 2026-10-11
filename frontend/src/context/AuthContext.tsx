@@ -189,10 +189,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   );
 };
 
+const fallbackAuthContext: AuthContextType = {
+  user: null,
+  creatorProfile: null,
+  organization: null,
+  token: null,
+  isAuthenticated: false,
+  isLoading: false,
+  login: async () => ({ access_token: '', token_type: 'bearer', user: { id: '', email: '', role: 'creator', display_name: '', is_active: true, onboarding_completed: false, created_at: '' } }),
+  register: async () => ({ access_token: '', token_type: 'bearer', user: { id: '', email: '', role: 'creator', display_name: '', is_active: true, onboarding_completed: false, created_at: '' } }),
+  logout: () => {},
+  updateOnboarding: async () => {},
+  refreshMe: async () => {},
+  authModalState: { isOpen: false, mode: 'login', defaultRole: 'creator' },
+  openAuthModal: () => {},
+  closeAuthModal: () => {},
+  isOnboardingOpen: false,
+  openOnboarding: () => {},
+  closeOnboarding: () => {},
+};
+
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  return context || fallbackAuthContext;
 };
