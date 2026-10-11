@@ -122,15 +122,28 @@ def evaluate_creator_fit(
         format_score = 15.0
 
     # 4. Tool Compatibility (0.0 - 100.0)
+    # Prioritizes demonstrated tool usage in actual portfolio projects over static self-reported lists
     creator_tools = [t.lower() for t in (creator.tools or [])]
-    if not creator_tools:
-        tool_score = 0.0
-    elif required_tools:
-        tool_ratio = calculate_overlap_ratio(required_tools, creator_tools)
-        tool_score = min(100.0, max(0.0, tool_ratio * 100.0))
+    project_tools = {
+        t.lower()
+        for p in (creator.portfolio_projects or [])
+        for t in (p.tools_used or [])
+    }
+
+    if required_tools:
+        # Match against demonstrated project tools (70% weight) + profile tools (30% weight)
+        project_tool_ratio = calculate_overlap_ratio(required_tools, list(project_tools))
+        profile_tool_ratio = calculate_overlap_ratio(required_tools, creator_tools)
+        tool_score = min(100.0, max(0.0, (project_tool_ratio * 70.0) + (profile_tool_ratio * 30.0)))
     else:
-        # Standard AI generative stack coverage (Runway, Midjourney, Topaz, ComfyUI, etc.)
-        tool_score = min(100.0, max(10.0, len(creator_tools) * 20.0))
+        # Evaluate verified generative AI tool usage in actual portfolio work
+        if project_tools:
+            tool_score = min(100.0, max(50.0, len(project_tools) * 25.0))
+        elif creator_tools:
+            # Self-reported tools without project artifacts receive capped baseline
+            tool_score = min(40.0, max(15.0, len(creator_tools) * 10.0))
+        else:
+            tool_score = 0.0
 
     # Composite Score calculation
     composite_score = round(
@@ -153,16 +166,27 @@ def evaluate_creator_fit(
                 f"Rate minimum (${int(creator.rate_min)}) exceeds campaign budget cap (${int(brief.budget_max)})"
             )
 
-    # 2. Commercial rights check
-    # Check if creator has verified or confirmed commercial use in relevant projects
-    unconfirmed_commercial = False
-    commercial_granted_projects = [
-        p for p in creator.portfolio_projects
-        if "granted" in p.commercial_use_status.lower()
+    # 2. Campaign-Specific Commercial Rights Check
+    # Evaluate licensing on the specific matching projects relevant to this campaign
+    candidate_projects_for_rights = matching_projects if matching_projects else (creator.portfolio_projects or [])
+    
+    granted_matching_projects = [
+        p for p in candidate_projects_for_rights
+        if "granted" in (p.commercial_use_status or "").lower()
     ]
-    if not commercial_granted_projects:
-        unconfirmed_commercial = True
-        mandatory_violations.append("Commercial rights require explicit confirmation before contract execution.")
+    
+    if not candidate_projects_for_rights:
+        mandatory_violations.append("No portfolio projects available to verify commercial licensing.")
+        commercial_summary = "Commercial use status is unconfirmed: no project evidence provided."
+    elif not granted_matching_projects:
+        mandatory_violations.append(
+            f"Commercial licensing is unconfirmed on projects matching '{brief.content_type}' scope."
+        )
+        commercial_summary = f"Commercial rights unconfirmed on relevant projects for '{brief.content_type}'."
+    else:
+        commercial_summary = (
+            f"Commercial rights verified on {len(granted_matching_projects)} project(s) matching '{brief.content_type}'."
+        )
 
     # 3. Availability check
     if creator.availability_status == "Booked":
@@ -174,17 +198,24 @@ def evaluate_creator_fit(
     explanations: List[str] = []
     missing_items: List[str] = []
 
+    # Project-specific evidence linking explanations directly to actual portfolio items
+    for proj in (matching_projects[:2] if matching_projects else []):
+        tools_str = ", ".join(proj.tools_used[:2]) if proj.tools_used else "AI generative workflow"
+        ratios_str = "/".join(proj.aspect_ratios) if proj.aspect_ratios else (brief.aspect_ratio or "standard")
+        workflow_count = len(proj.workflow_steps or [])
+        workflow_note = f" with {workflow_count} verified workflow steps" if workflow_count > 0 else ""
+        explanations.append(
+            f"Project '{proj.title}' provides verified evidence: delivered {proj.content_type} ({ratios_str}) via {tools_str}{workflow_note}."
+        )
+
     # Positive matches
     if skill_score >= 60:
         matching_skills = [s for s in (creator.skills or []) if any(t in s.lower() for t in brief_skills_needed)]
         if matching_skills:
-            explanations.append(f"Strong skill alignment in: {', '.join(matching_skills[:3])}")
-    
-    if matching_projects:
-        explanations.append(f"Documented portfolio proof in {len(matching_projects)} project(s) matching '{brief.content_type}' and {brief.aspect_ratio}")
+            explanations.append(f"Demonstrated core skill alignment in: {', '.join(matching_skills[:3])}.")
     
     if has_aspect_ratio:
-        explanations.append(f"Demonstrated production experience in target aspect ratio {brief.aspect_ratio}")
+        explanations.append(f"Demonstrated production experience in target aspect ratio {brief.aspect_ratio}.")
 
     # Missing / Uncertain Requirements
     if not has_aspect_ratio:
@@ -196,12 +227,6 @@ def evaluate_creator_fit(
     unmatched_skills = [tag for tag in (brief.style_tags or []) if not any(tag.lower() in s.lower() for s in (creator.skills or []))]
     if unmatched_skills:
         missing_items.append(f"Uncertain experience in style keywords: {', '.join(unmatched_skills[:2])}")
-
-    # Commercial rights summary
-    if commercial_granted_projects:
-        commercial_summary = f"Commercial rights documented on {len(commercial_granted_projects)} portfolio project(s)."
-    else:
-        commercial_summary = "Commercial use status is unconfirmed for this creator's workflow."
 
     # Verification tier
     verified_records = [v for v in (creator.verification_records or []) if v.status == "Verified"]

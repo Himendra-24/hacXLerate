@@ -5,8 +5,8 @@ from sqlalchemy import or_, and_, desc
 import datetime
 
 from app.core.database import get_db
-from app.core.auth import get_current_user, require_current_user
-from app.models.models import Message, User
+from app.core.auth import require_current_user
+from app.models.models import Message, User, Engagement, CreatorProfile, Brand
 from app.schemas.schemas import MessageCreate, MessageResponse, MessageThreadSummary
 
 router = APIRouter(prefix="/messages", tags=["Messaging & Collaboration"])
@@ -34,14 +34,13 @@ def get_message_threads(
         is_sender = (m.sender_id == auth_id)
         partner_id = m.recipient_id if is_sender else m.sender_id
         partner_name = m.recipient_name if is_sender else m.sender_name
-        partner_role = m.recipient_name if is_sender else m.sender_name
 
         if partner_id not in threads_dict:
             unread = 1 if (not is_sender and not m.is_read) else 0
             threads_dict[partner_id] = {
                 "partner_id": partner_id,
                 "partner_name": partner_name,
-                "partner_role": "creator" if m.sender_role == "brand" else "brand",
+                "partner_role": "creator" if current_user.role == "brand" else "brand",
                 "last_message": m.content,
                 "last_message_at": m.created_at,
                 "unread_count": unread,
@@ -61,7 +60,8 @@ def get_conversation(
     db: Session = Depends(get_db)
 ):
     """
-    Get message history between current user and a creator/brand partner.
+    Get message history between current user and an authorized partner.
+    Strictly isolated: only returns messages where the authenticated user is sender or recipient.
     """
     auth_id = current_user.id
 
@@ -86,8 +86,25 @@ def get_engagement_messages(
     db: Session = Depends(get_db)
 ):
     """
-    Get all messages linked to a specific engagement. User must be authenticated.
+    Get all messages linked to a specific engagement.
+    Strictly authorizes that current_user belongs to the engagement parties.
     """
+    engagement = db.query(Engagement).filter(Engagement.id == engagement_id).first()
+    if not engagement:
+        raise HTTPException(status_code=404, detail="Engagement not found")
+
+    creator = db.query(CreatorProfile).filter(CreatorProfile.id == engagement.creator_id).first()
+    creator_uid = creator.user_id if creator else None
+    org = db.query(Brand).filter(Brand.id == engagement.brand_id).first()
+    org_uid = org.owner_user_id if org else None
+
+    is_authorized = (current_user.id in (creator_uid, org_uid) or current_user.role == "admin")
+    if not is_authorized:
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: You are not an authorized party in this engagement."
+        )
+
     messages = (
         db.query(Message)
         .filter(Message.engagement_id == engagement_id)
@@ -105,17 +122,41 @@ def send_message(
 ):
     """
     Send a direct message or project-linked message.
-    Sender ID is always overridden with the authenticated user's ID.
+    Sender ID, name, and role are authoritatively set from the authenticated JWT.
+    Validates recipient and engagement access controls.
     """
     auth_id = current_user.id
+
+    if msg_in.recipient_id == auth_id:
+        raise HTTPException(status_code=400, detail="Cannot send messages to yourself.")
+
+    recipient = db.query(User).filter(User.id == msg_in.recipient_id).first()
+    if not recipient:
+        raise HTTPException(status_code=404, detail="Recipient user not found.")
+
+    # If linked to an engagement, verify authorization
+    if msg_in.engagement_id:
+        engagement = db.query(Engagement).filter(Engagement.id == msg_in.engagement_id).first()
+        if not engagement:
+            raise HTTPException(status_code=404, detail="Engagement not found")
+        
+        creator = db.query(CreatorProfile).filter(CreatorProfile.id == engagement.creator_id).first()
+        creator_uid = creator.user_id if creator else None
+        org = db.query(Brand).filter(Brand.id == engagement.brand_id).first()
+        org_uid = org.owner_user_id if org else None
+
+        if auth_id not in (creator_uid, org_uid) and current_user.role != "admin":
+            raise HTTPException(status_code=403, detail="Forbidden: You are not authorized to post in this engagement.")
+        if recipient.id not in (creator_uid, org_uid) and recipient.role != "admin":
+            raise HTTPException(status_code=400, detail="Recipient is not an authorized party in this engagement.")
 
     new_msg = Message(
         engagement_id=msg_in.engagement_id,
         sender_id=auth_id,
-        sender_name=msg_in.sender_name if msg_in.sender_name else current_user.display_name,
-        sender_role=msg_in.sender_role,
-        recipient_id=msg_in.recipient_id,
-        recipient_name=msg_in.recipient_name,
+        sender_name=current_user.display_name,
+        sender_role=current_user.role,
+        recipient_id=recipient.id,
+        recipient_name=recipient.display_name,
         content=msg_in.content,
         attachment_url=msg_in.attachment_url,
         attachment_name=msg_in.attachment_name,
@@ -137,7 +178,6 @@ def mark_message_as_read(
     msg = db.query(Message).filter(Message.id == message_id).first()
     if not msg:
         raise HTTPException(status_code=404, detail="Message not found")
-    # Only recipient can mark as read
     if msg.recipient_id != current_user.id:
         raise HTTPException(status_code=403, detail="Only the recipient can mark a message as read")
     msg.is_read = True
@@ -153,8 +193,16 @@ def mark_thread_read(
     db: Session = Depends(get_db)
 ):
     auth_id = current_user.id
-    db.query(Message).filter(
-        and_(Message.sender_id == partner_id, Message.recipient_id == auth_id)
-    ).update({Message.is_read: True})
+    unread_msgs = (
+        db.query(Message)
+        .filter(
+            Message.sender_id == partner_id,
+            Message.recipient_id == auth_id,
+            Message.is_read == False
+        )
+        .all()
+    )
+    for m in unread_msgs:
+        m.is_read = True
     db.commit()
-    return {"status": "ok"}
+    return {"status": "ok", "marked_read": len(unread_msgs)}

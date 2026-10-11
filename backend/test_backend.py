@@ -180,10 +180,21 @@ def test_reviews_lifecycle():
 def test_asset_upload():
     import io
     test_file_content = b"Mock AI Video File or ComfyUI Workflow JSON content"
-    files = {"file": ("test_render.mp4", io.BytesIO(test_file_content), "video/mp4")}
-    data = {"uploader_role": "creator", "file_type": "video"}
+    data = {"file_type": "video"}
 
-    upload_res = client.post("/api/v1/uploads", files=files, data=data)
+    # 1. Unauthenticated upload must return 401 Unauthorized
+    unauth_res = client.post(
+        "/api/v1/uploads",
+        files={"file": ("test_render.mp4", io.BytesIO(test_file_content), "video/mp4")},
+        data=data
+    )
+    assert unauth_res.status_code == 401
+
+    # 2. Authenticated creator upload succeeds
+    c_token, c_user, _, _ = get_auth_token_for("creator", "uploader")
+    c_headers = {"Authorization": f"Bearer {c_token}"}
+    files = {"file": ("test_render.mp4", io.BytesIO(test_file_content), "video/mp4")}
+    upload_res = client.post("/api/v1/uploads", files=files, data=data, headers=c_headers)
     assert upload_res.status_code == 200
     res_data = upload_res.json()
     assert res_data["original_filename"] == "test_render.mp4"
@@ -827,6 +838,75 @@ def test_creator_brief_application_and_brand_review_journey():
     }, headers=b_headers)
     assert status_res.status_code == 200
     assert status_res.json()["status"] == "accepted"
+
+
+def test_messaging_authorization_boundaries():
+    b_token, b_user, _, _ = get_auth_token_for("brand", "sec_msg_b")
+    c_token, c_user, _, _ = get_auth_token_for("creator", "sec_msg_c")
+    b_headers = {"Authorization": f"Bearer {b_token}"}
+    c_headers = {"Authorization": f"Bearer {c_token}"}
+
+    # 1. Unauthenticated requests to /messages must return 401
+    assert client.get("/api/v1/messages/threads").status_code == 401
+    assert client.post("/api/v1/messages", json={"recipient_id": c_user["id"], "content": "hi"}).status_code == 401
+
+    # 2. Cannot message self
+    self_res = client.post("/api/v1/messages", json={
+        "recipient_id": b_user["id"],
+        "content": "Self message test"
+    }, headers=b_headers)
+    assert self_res.status_code == 400
+
+    # 3. Third-party user cannot view private conversation
+    t_token, t_user, _, _ = get_auth_token_for("creator", "third_party")
+    t_headers = {"Authorization": f"Bearer {t_token}"}
+
+    # Send message from brand to creator
+    client.post("/api/v1/messages", json={
+        "recipient_id": c_user["id"],
+        "content": "Confidential communication"
+    }, headers=b_headers)
+
+    # Third party gets conversation between brand and creator -> returns empty list (no leak)
+    t_conv = client.get(f"/api/v1/messages/conversation/{b_user['id']}", headers=t_headers)
+    assert t_conv.status_code == 200
+    assert len(t_conv.json()) == 0
+
+
+def test_upload_resource_authorization():
+    import io
+    c1_token, c1_user, _, _ = get_auth_token_for("creator", "upl_c1")
+    c2_token, c2_user, c2_profile, _ = get_auth_token_for("creator", "upl_c2")
+    c1_headers = {"Authorization": f"Bearer {c1_token}"}
+
+    test_bytes = b"Mock Video Content"
+
+    # Creator 1 attempts to upload asset for Creator 2's profile -> 403 Forbidden
+    spoof_res = client.post(
+        "/api/v1/uploads",
+        files={"file": ("spoof.mp4", io.BytesIO(test_bytes), "video/mp4")},
+        data={"related_entity_type": "creator", "related_entity_id": c2_profile["id"]},
+        headers=c1_headers
+    )
+    assert spoof_res.status_code == 403
+
+
+def test_brief_builder_field_provenance():
+    # Verify that AI brief structurer produces confirmed, suggested, and needs_confirmation provenance
+    struct_res = client.post("/api/v1/briefs/structure", json={
+        "raw_idea": "Cyberpunk electric supercar drifting at neon night Tokyo in 9:16 vertical video",
+        "preferred_format": "9:16"
+    })
+    assert struct_res.status_code == 200
+    data = struct_res.json()
+    assert "field_provenance" in data
+    assert data["field_provenance"]["description"] == "confirmed"
+    assert data["field_provenance"]["aspect_ratio"] == "confirmed"
+    assert data["field_provenance"]["budget"] == "needs_confirmation"
+    assert "confirmed_fields" in data
+    assert "needs_confirmation_fields" in data
+    assert "aspect_ratio" in data["confirmed_fields"]
+
 
 
 

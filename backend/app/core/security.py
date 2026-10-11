@@ -6,7 +6,18 @@ import datetime
 from typing import Optional, Dict, Any
 import jwt
 
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "unframe-jwt-super-secret-key-2026-production-fit")
+ENV = os.getenv("ENVIRONMENT", "development").lower()
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+
+if not SECRET_KEY:
+    if ENV in ("production", "prod"):
+        raise RuntimeError(
+            "FATAL SECURITY CONFIGURATION: JWT_SECRET_KEY environment variable is required in production! "
+            "Set a cryptographically secure key before deploying."
+        )
+    # Development / Testing fallback
+    SECRET_KEY = "unframe-jwt-dev-secret-key-change-in-production-2026"
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 

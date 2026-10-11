@@ -272,6 +272,7 @@ class AssetUpload(Base):
     storage_path = Column(String, nullable=False)
     url = Column(String, nullable=False)
     uploader_role = Column(String, default="brand")  # "brand" or "creator"
+    uploader_user_id = Column(String, nullable=True)
     related_entity_type = Column(String, nullable=True)
     related_entity_id = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)

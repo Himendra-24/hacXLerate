@@ -357,6 +357,9 @@ class StructuredDraftSuggestion(BaseModel):
     suggested_skills_needed: List[str]
     suggested_tools: List[str]
     needs_confirmation_fields: List[str]
+    confirmed_fields: List[str] = []
+    suggested_fields: List[str] = []
+    field_provenance: Dict[str, str] = {}  # "confirmed" | "suggested" | "needs_confirmation"
     integrity_warnings: List[str] = []
 
 
@@ -435,11 +438,11 @@ class EngagementUpdate(BaseModel):
 
 class MessageBase(BaseModel):
     engagement_id: Optional[str] = None
-    sender_id: str
-    sender_name: str
-    sender_role: str = "brand"  # "brand" or "creator"
+    sender_id: Optional[str] = None
+    sender_name: Optional[str] = None
+    sender_role: Optional[str] = "brand"  # "brand" or "creator"
     recipient_id: str
-    recipient_name: str
+    recipient_name: Optional[str] = None
     content: str
     attachment_url: Optional[str] = None
     attachment_name: Optional[str] = None

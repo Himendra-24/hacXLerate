@@ -47,6 +47,9 @@ def run_migrations(target_engine):
             ("created_at", "DATETIME", "CURRENT_TIMESTAMP"),
             ("updated_at", "DATETIME", "CURRENT_TIMESTAMP"),
         ],
+        "asset_uploads": [
+            ("uploader_user_id", "TEXT", "NULL"),
+        ],
     }
 
     with target_engine.connect() as conn:

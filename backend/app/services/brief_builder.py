@@ -86,6 +86,14 @@ Respond ONLY with valid JSON in this exact structure:
             suggested_skills_needed=parsed.get("suggested_skills_needed", ["Prompt Engineering", "Compositing"]),
             suggested_tools=parsed.get("suggested_tools", ["Runway Gen-3", "Midjourney v6"]),
             needs_confirmation_fields=parsed.get("needs_confirmation_fields", ["budget", "deadline"]),
+            confirmed_fields=["description"] + (["aspect_ratio"] if preferred_format else []),
+            suggested_fields=["title", "objective", "content_type", "style_tags", "duration", "resolution"],
+            field_provenance={
+                "description": "confirmed",
+                "aspect_ratio": "confirmed" if preferred_format else "suggested",
+                "budget": "needs_confirmation",
+                "deadline": "needs_confirmation"
+            },
             integrity_warnings=parsed.get("integrity_warnings", ["Parameters require explicit confirmation."])
         )
 
@@ -157,11 +165,40 @@ def _heuristic_extract(raw_idea: str, target_audience: str = None, preferred_for
         skills.extend(["Prompt Architecture", "Audio-Visual Editing", "Upscaling"])
         tools.extend(["Midjourney v6", "Topaz Video AI", "Premiere Pro"])
 
-    # Identify fields needing brand confirmation
-    needs_confirmation = ["budget", "deadline"]
+    # Determine confirmed vs suggested vs needs_confirmation fields
+    confirmed_fields = ["description"]
+    suggested_fields = ["title", "objective", "content_type", "style_tags", "duration", "resolution", "suggested_skills_needed", "suggested_tools"]
+    needs_confirmation = ["budget", "deadline", "commercial_use_scope", "license_duration", "exclusivity"]
+
+    if preferred_format:
+        confirmed_fields.append("aspect_ratio")
+    else:
+        suggested_fields.append("aspect_ratio")
+
+    if target_audience:
+        confirmed_fields.append("target_audience")
+
+    field_provenance = {
+        "description": "confirmed",
+        "aspect_ratio": "confirmed" if preferred_format else "suggested",
+        "title": "suggested",
+        "objective": "suggested",
+        "content_type": "suggested",
+        "style_tags": "suggested",
+        "duration": "suggested",
+        "resolution": "suggested",
+        "suggested_skills_needed": "suggested",
+        "suggested_tools": "suggested",
+        "budget": "needs_confirmation",
+        "deadline": "needs_confirmation",
+        "commercial_use_scope": "needs_confirmation",
+        "license_duration": "needs_confirmation",
+        "exclusivity": "needs_confirmation",
+    }
+
     warnings = [
-        "Budget and deadline were not stated in the raw idea; default estimates provided for draft preview.",
-        "Commercial licensing duration (e.g. 12 months) and exclusivity require brand sign-off."
+        "Budget and delivery date were not explicitly specified in the raw prompt; default ranges are provided as starting recommendations.",
+        "Commercial licensing duration (e.g. 12 months) and exclusivity terms require explicit confirmation before publishing."
     ]
 
     # Generate title
@@ -185,5 +222,8 @@ def _heuristic_extract(raw_idea: str, target_audience: str = None, preferred_for
         suggested_skills_needed=skills,
         suggested_tools=tools,
         needs_confirmation_fields=needs_confirmation,
+        confirmed_fields=confirmed_fields,
+        suggested_fields=suggested_fields,
+        field_provenance=field_provenance,
         integrity_warnings=warnings
     )
