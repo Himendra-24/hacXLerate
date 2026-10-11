@@ -75,6 +75,12 @@ export interface CreatorProfile {
   portfolio_projects: PortfolioProject[];
   verification_records: VerificationRecord[];
   reviews?: Review[];
+  trust_level?: 'Pending' | 'Basic' | 'Evidence-backed' | 'Established';
+  verification_status?: string;
+  email_verified?: boolean;
+  ownership_code?: string;
+  verified_profiles?: Array<{ url: string; verified_at: string; code_matched?: string }>;
+  verified_tools?: Array<{ tool: string; evidence_url: string; verified_at: string }>;
 }
 
 export interface Organization {

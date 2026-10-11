@@ -114,6 +114,12 @@ class CreatorProfileBase(BaseModel):
     reviews_count: Optional[int] = 0
     availability_status: Optional[str] = "Available"
     featured: Optional[bool] = False
+    trust_level: Optional[str] = "Pending"
+    verification_status: Optional[str] = "Pending"
+    email_verified: Optional[bool] = False
+    ownership_code: Optional[str] = None
+    verified_profiles: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
+    verified_tools: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
 
 class CreatorProfileCreate(CreatorProfileBase):
     pass
@@ -132,6 +138,26 @@ class CreatorProfileUpdate(BaseModel):
     rating_avg: Optional[float] = None
     reviews_count: Optional[int] = None
     availability_status: Optional[str] = None
+    trust_level: Optional[str] = None
+    verification_status: Optional[str] = None
+    email_verified: Optional[bool] = None
+
+class VerifyEmailRequest(BaseModel):
+    pass
+
+class VerifyEmailConfirm(BaseModel):
+    code: str
+
+class VerifyOwnershipRequest(BaseModel):
+    platform_url: str
+
+class VerifyToolProofRequest(BaseModel):
+    tool_name: str
+    evidence_url: str
+
+class AdminReviewRequest(BaseModel):
+    decision: str = "approve"  # "approve" | "reject"
+    notes: Optional[str] = None
 
 class CreatorProfileResponse(CreatorProfileBase):
     id: Optional[str] = "mock-creator-id"

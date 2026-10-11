@@ -175,6 +175,51 @@ export const api = {
     return handleResponse<{ status: string; project_id: string }>(res);
   },
 
+  // Multi-Layer Verification & Trust Signals
+  async requestEmailVerification(creatorId: string): Promise<{ status: string; demo_otp?: string; message: string }> {
+    const res = await fetch(`${API_BASE}/creators/${creatorId}/verify-email/request`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<{ status: string; demo_otp?: string; message: string }>(res);
+  },
+
+  async confirmEmailVerification(creatorId: string, code: string): Promise<CreatorProfile> {
+    const res = await fetch(`${API_BASE}/creators/${creatorId}/verify-email/confirm`, {
+      method: 'POST',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ code }),
+    });
+    return handleResponse<CreatorProfile>(res);
+  },
+
+  async verifyOwnership(creatorId: string, platformUrl: string): Promise<{ status: string; platform_url: string; ownership_code: string; trust_level: string; message: string }> {
+    const res = await fetch(`${API_BASE}/creators/${creatorId}/verify-ownership`, {
+      method: 'POST',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ platform_url: platformUrl }),
+    });
+    return handleResponse<{ status: string; platform_url: string; ownership_code: string; trust_level: string; message: string }>(res);
+  },
+
+  async verifyToolProof(creatorId: string, toolName: string, evidenceUrl: string): Promise<{ status: string; tool_name: string; evidence_url: string; trust_level: string; message: string }> {
+    const res = await fetch(`${API_BASE}/creators/${creatorId}/verify-tool-proof`, {
+      method: 'POST',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ tool_name: toolName, evidence_url: evidenceUrl }),
+    });
+    return handleResponse<{ status: string; tool_name: string; evidence_url: string; trust_level: string; message: string }>(res);
+  },
+
+  async adminReviewCreator(creatorId: string, decision: 'approve' | 'reject', notes?: string): Promise<CreatorProfile> {
+    const res = await fetch(`${API_BASE}/creators/${creatorId}/admin-review`, {
+      method: 'POST',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ decision, notes }),
+    });
+    return handleResponse<CreatorProfile>(res);
+  },
+
   // Briefs & AI Builder
   async structureRawIdea(rawIdea: string, targetAudience?: string, preferredFormat?: string): Promise<StructuredDraftSuggestion> {
     const res = await fetch(`${API_BASE}/briefs/structure`, {

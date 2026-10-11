@@ -66,8 +66,17 @@ def _seed_demo_users(db: Session):
 
     # Link Elena Rostova to creator_user if not linked
     elena = db.query(CreatorProfile).filter(CreatorProfile.display_name == "Elena Rostova").first()
-    if elena and not elena.user_id:
-        elena.user_id = creator_user.id
+    if elena:
+        if not elena.user_id:
+            elena.user_id = creator_user.id
+        elena.trust_level = "Established"
+        elena.verification_status = "Approved"
+        elena.email_verified = True
+        elena.ownership_code = "unframe-4821"
+        if not elena.verified_profiles:
+            elena.verified_profiles = [{"url": "https://github.com/elena-rostova-ai", "verified_at": "2026-10-01T12:00:00Z", "code_matched": "unframe-4821"}]
+        if not elena.verified_tools:
+            elena.verified_tools = [{"tool": "Runway Gen-3", "evidence_url": "https://civitai.com/models/elena-diffusion", "verified_at": "2026-10-01T12:00:00Z"}]
 
     # Link Acme Mobility to brand_user if not linked
     acme = db.query(Brand).filter(Brand.company_name == "Acme Mobility Studio").first()

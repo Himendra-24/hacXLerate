@@ -908,6 +908,119 @@ def test_brief_builder_field_provenance():
     assert "aspect_ratio" in data["confirmed_fields"]
 
 
+def test_multi_layer_creator_trust_and_verification_signals():
+    """
+    Verifies the multi-layered trust system:
+    Pending -> Basic (Email OTP) -> Evidence-backed (Ownership Code) -> Established (Tool Proof + Admin Review).
+    Also verifies authorization enforcement at each verification layer.
+    """
+    c_token, c_user, c_profile, _ = get_auth_token_for("creator", "trust_test_creator")
+    c_headers = {"Authorization": f"Bearer {c_token}"}
+    other_token, other_user, _, _ = get_auth_token_for("creator", "trust_other_creator")
+    other_headers = {"Authorization": f"Bearer {other_token}"}
+    admin_token, _, _, _ = get_auth_token_for("admin", "trust_admin")
+    admin_headers = {"Authorization": f"Bearer {admin_token}"}
+
+    creator_id = c_profile["id"]
+
+    # Initial state: Trust level is Pending
+    get_res = client.get(f"/api/v1/creators/{creator_id}")
+    assert get_res.status_code == 200
+    c_data = get_res.json()
+    assert c_data["trust_level"] == "Pending"
+    assert c_data["email_verified"] is False
+    ownership_code = c_data["ownership_code"]
+    assert ownership_code.startswith("unframe-")
+
+    # Layer 1: Request email OTP
+    # Other creator cannot request OTP for this creator (403)
+    bad_req = client.post(f"/api/v1/creators/{creator_id}/verify-email/request", headers=other_headers)
+    assert bad_req.status_code == 403
+
+    # Authorized creator requests OTP
+    req_res = client.post(f"/api/v1/creators/{creator_id}/verify-email/request", headers=c_headers)
+    assert req_res.status_code == 200
+    otp_data = req_res.json()
+    assert "demo_otp" in otp_data
+    demo_otp = otp_data["demo_otp"]
+
+    # Submit invalid OTP -> 400
+    bad_otp = client.post(
+        f"/api/v1/creators/{creator_id}/verify-email/confirm",
+        json={"code": "000000"},
+        headers=c_headers
+    )
+    assert bad_otp.status_code == 400
+
+    # Submit valid OTP -> 200, trust level upgrades to Basic
+    good_otp = client.post(
+        f"/api/v1/creators/{creator_id}/verify-email/confirm",
+        json={"code": demo_otp},
+        headers=c_headers
+    )
+    assert good_otp.status_code == 200
+    assert good_otp.json()["email_verified"] is True
+    assert good_otp.json()["trust_level"] == "Basic"
+
+    # Layer 2: Ownership code verification
+    # Try public page without code -> 400
+    fail_owner = client.post(
+        f"/api/v1/creators/{creator_id}/verify-ownership",
+        json={"platform_url": "https://github.com/mock-user/no-code"},
+        headers=c_headers
+    )
+    assert fail_owner.status_code == 400
+    assert "Ownership code" in fail_owner.json()["detail"]
+
+    # Provide page with code -> 200, trust level upgrades to Evidence-backed
+    succ_owner = client.post(
+        f"/api/v1/creators/{creator_id}/verify-ownership",
+        json={"platform_url": f"https://mock-github.com/profile?bio_code={ownership_code}"},
+        headers=c_headers
+    )
+    assert succ_owner.status_code == 200
+    assert succ_owner.json()["status"] == "verified"
+    assert succ_owner.json()["trust_level"] == "Evidence-backed"
+
+    # Layer 3: Tool proof verification
+    # Page without tool name -> 400
+    fail_tool = client.post(
+        f"/api/v1/creators/{creator_id}/verify-tool-proof",
+        json={"tool_name": "Runway Gen-3", "evidence_url": "https://mock-evidence.org/just-a-photo"},
+        headers=c_headers
+    )
+    assert fail_tool.status_code == 400
+
+    # Page with tool name -> 200
+    succ_tool = client.post(
+        f"/api/v1/creators/{creator_id}/verify-tool-proof",
+        json={"tool_name": "Runway Gen-3", "evidence_url": "https://mock-evidence.org/recipe?tool=runway+gen-3"},
+        headers=c_headers
+    )
+    assert succ_tool.status_code == 200
+    assert succ_tool.json()["status"] == "verified"
+
+    # Layer 5: Manual admin review
+    # Non-admin cannot approve -> 403
+    bad_admin = client.post(
+        f"/api/v1/creators/{creator_id}/admin-review",
+        json={"decision": "approve", "notes": "Looks stellar"},
+        headers=c_headers
+    )
+    assert bad_admin.status_code == 403
+
+    # Admin approves -> 200, trust level upgrades to Established
+    good_admin = client.post(
+        f"/api/v1/creators/{creator_id}/admin-review",
+        json={"decision": "approve", "notes": "Verified portfolio provenance and credentials"},
+        headers=admin_headers
+    )
+    assert good_admin.status_code == 200
+    assert good_admin.json()["verification_status"] == "Approved"
+    assert good_admin.json()["trust_level"] == "Established"
+
+
+
 
 
 

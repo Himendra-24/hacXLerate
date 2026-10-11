@@ -51,13 +51,25 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
         {/* Floating Verification Tag & Shortlist */}
         <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
           <div className="px-2.5 py-1 rounded-full bg-white text-slate-900 text-[11px] font-bold shadow-md flex items-center gap-1">
-            {isVerified ? (
+            {creator.trust_level === 'Established' ? (
+              <>
+                <span className="text-emerald-600">● Established</span>
+              </>
+            ) : creator.trust_level === 'Evidence-backed' ? (
+              <>
+                <span className="text-[#5B46F6]">● Evidence-backed</span>
+              </>
+            ) : creator.trust_level === 'Basic' ? (
+              <>
+                <span className="text-sky-600">● Basic (Email)</span>
+              </>
+            ) : isVerified ? (
               <>
                 <span className="text-[#5B46F6]">Verified</span>
                 <span className="text-slate-400 font-normal">Match</span>
               </>
             ) : (
-              <span className="text-slate-600 font-medium">Creator</span>
+              <span className="text-slate-600 font-medium">Pending Review</span>
             )}
           </div>
 

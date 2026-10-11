@@ -66,6 +66,16 @@ class CreatorProfile(Base):
     reviews_count = Column(Integer, default=1)
     availability_status = Column(String, default="Available")  # "Available", "Busy", "Booked"
     featured = Column(Boolean, default=False)
+    
+    # Trust & Verification System (Pending -> Basic -> Evidence-backed -> Established)
+    trust_level = Column(String, default="Pending")  # "Pending", "Basic", "Evidence-backed", "Established"
+    verification_status = Column(String, default="Pending")  # "Pending", "Approved", "Rejected"
+    email_verified = Column(Boolean, default=False)
+    email_otp = Column(String, nullable=True)
+    ownership_code = Column(String, nullable=True)  # e.g., "unframe-4821"
+    verified_profiles = Column(JSON, default=list)  # [{"platform": "...", "url": "...", "verified_at": "..."}]
+    verified_tools = Column(JSON, default=list)  # [{"tool": "...", "evidence_url": "...", "verified_at": "..."}]
+
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 

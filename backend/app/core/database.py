@@ -50,6 +50,15 @@ def run_migrations(target_engine):
         "asset_uploads": [
             ("uploader_user_id", "TEXT", "NULL"),
         ],
+        "creator_profiles": [
+            ("trust_level", "TEXT", "'Pending'"),
+            ("verification_status", "TEXT", "'Pending'"),
+            ("email_verified", "BOOLEAN", "0"),
+            ("email_otp", "TEXT", "NULL"),
+            ("ownership_code", "TEXT", "NULL"),
+            ("verified_profiles", "TEXT", "'[]'"),
+            ("verified_tools", "TEXT", "'[]'"),
+        ],
     }
 
     with target_engine.connect() as conn:

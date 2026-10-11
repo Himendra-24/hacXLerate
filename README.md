@@ -11,7 +11,7 @@
 [![Status](https://img.shields.io/badge/Platform%20Status-100%25%20Operational-8B5CF6?style=for-the-badge&logo=rocket&logoColor=white)](http://localhost:5173)
 [![Frontend Build](https://img.shields.io/badge/Frontend-Vite%20%7C%20React%2019%20%7C%20TypeScript-EC4899?style=for-the-badge&logo=react&logoColor=white)](http://localhost:5173)
 [![Backend API](https://img.shields.io/badge/Backend-FastAPI%20%7C%20Python%203.12-10B981?style=for-the-badge&logo=fastapi&logoColor=white)](http://127.0.0.1:8000/docs)
-[![Tests Passing](https://img.shields.io/badge/Pytest%20Suite-28%2F28%20Passing%20(100%25)-06B6D4?style=for-the-badge&logo=pytest&logoColor=white)](backend/test_backend.py)
+[![Tests Passing](https://img.shields.io/badge/Pytest%20Suite-29%2F29%20Passing%20(100%25)-06B6D4?style=for-the-badge&logo=pytest&logoColor=white)](backend/test_backend.py)
 [![Security](https://img.shields.io/badge/Security-Authoritative%20RBAC%20%2B%20JWT-F59E0B?style=for-the-badge&logo=auth0&logoColor=white)](backend/app/core/auth.py)
 
 ---
@@ -84,8 +84,30 @@ $$\mathbf{Match\ Score} = (0.40 \times \text{Skills}) + (0.30 \times \text{Portf
 | **🤖 AI-Assisted Brief Builder** | Natural language prompt structurer (Gemini 1.5 Flash + Deterministic Heuristic Fallback) with field provenance. | [`BriefBuilderPage.tsx`](frontend/src/pages/BriefBuilderPage.tsx) |
 | **🔍 Multi-Attribute Discovery** | Filter by Specializations, Generative Tools, Content Types, Aspect Ratios, Rate Range, and Availability. | [`DiscoverPage.tsx`](frontend/src/pages/DiscoverPage.tsx) |
 | **⭐ Verification Trust Badges** | Tiers: *"Verified Capabilities"* (backed by actual files) vs. *"Self-Reported Credentials"*. | [`VerificationBadge.tsx`](frontend/src/components/ui/VerificationBadge.tsx) |
+| **🛡️ Multi-Layer Trust & Verification** | Layered identity checks: Email OTP $\to$ Bio ownership code $\to$ Tool proof $\to$ Editorial review. | [`CreatorProfilePage.tsx`](frontend/src/pages/CreatorProfilePage.tsx) |
 | **💬 Direct Messaging Hub** | Server-authorized bidirectional conversation threads with participant isolation. | [`MessagesPage.tsx`](frontend/src/pages/MessagesPage.tsx) |
 | **🤝 Engagement Lifecycle** | Full iteration log (`in_progress` $\to$ `revision_requested` $\to$ `approved` $\to$ `delivered`). | [`EngagementDetailPage.tsx`](frontend/src/pages/EngagementDetailPage.tsx) |
+
+---
+
+## 🛡️ How to Trust a Creator (Multi-Layer Verification System)
+
+> *"No single check proves a real creator. Layer these, all free."*
+
+UNFRAME builds a transparent, multi-tiered trust hierarchy rather than relying on self-reported profile text:
+
+```
+┌───────────┐      ┌───────────┐      ┌───────────────────┐      ┌───────────────┐
+│  PENDING  │ ───► │   BASIC   │ ───► │  EVIDENCE-BACKED  │ ───► │  ESTABLISHED  │
+│  Signup   │      │ Email OTP │      │ Bio Code / Tools  │      │ Full Proof    │
+└───────────┘      └───────────┘      └───────────────────┘      └───────────────┘
+```
+
+1. **✉️ Email Verification (Layer 1):** One-time verification code (OTP) sent to creator's email. Blocks fake signups and impersonation.
+2. **🔑 Bio Ownership Code (Layer 2):** Creator is assigned a unique code (e.g. `unframe-4821`) and pastes it into the bio of their public YouTube channel, Behance, GitHub, or ArtStation page. Our backend fetches the public webpage and confirms control.
+3. **🛠️ Tool Proof (Layer 3):** Creator submits a public evidence page (prompt share link, Civitai checkpoint, GitHub workflow repo). Our backend scans page text for the declared AI tool name.
+4. *(Content credentials / C2PA skipped as fragile per specification)*
+5. **👁️ Manual Review (Layer 5):** New creators start as *Pending*. Platform administrators inspect generation parameters and commercial releases before awarding *Established* trust.
 
 ---
 
@@ -113,7 +135,7 @@ $$\mathbf{Match\ Score} = (0.40 \times \text{Skills}) + (0.30 \times \text{Portf
 
 ---
 
-## 🧪 Automated Testing (28/28 Passing Tests)
+## 🧪 Automated Testing (29/29 Passing Tests)
 
 Run the backend test suite:
 ```bash
@@ -123,12 +145,12 @@ pytest backend/test_backend.py backend/test_e2e_simulation.py -v
 ```
 ============================= test session starts =============================
 platform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0
-collected 28 items
+collected 29 items
 
-backend\test_backend.py ...........................                      [ 96%]
+backend\test_backend.py ............................                     [ 96%]
 backend\test_e2e_simulation.py .                                         [100%]
 
-====================== 28 passed, 0 failed in 5.78s ============================
+====================== 29 passed, 0 failed in 6.12s ============================
 ```
 
 ---
