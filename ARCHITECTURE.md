@@ -1,4 +1,4 @@
-# Cre8Match AI — Technical Architecture & Implementation Plan
+# UNFRAME — Technical Architecture & Implementation Plan
 
 ## 1. System Architecture
 ```mermaid

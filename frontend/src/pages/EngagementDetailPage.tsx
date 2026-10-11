@@ -155,14 +155,14 @@ export const EngagementDetailPage: React.FC = () => {
       {/* Header & Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-charcoal-900 border border-charcoal-800 text-slate-300 text-xs mb-2">
-            <FolderCheck className="w-3.5 h-3.5 text-electric-400" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-50 border border-violet-100 text-[#5B46F6] text-xs font-semibold mb-2">
+            <FolderCheck className="w-3.5 h-3.5 text-[#5B46F6]" />
             <span>Campaign Delivery & Revision Lifecycle</span>
           </div>
-          <h1 className="font-display font-extrabold text-3xl text-white">
+          <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-slate-900">
             Engagement & Delivery Hub
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
+          <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
             Track iteration versions, review feedback loops, approve deliverables, and inspect recorded commercial licensing rights.
           </p>
         </div>
@@ -170,7 +170,7 @@ export const EngagementDetailPage: React.FC = () => {
         {/* Engagement switcher if multiple exist */}
         {engagements.length > 1 && (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 whitespace-nowrap">Campaign:</span>
+            <span className="text-xs text-slate-500 whitespace-nowrap">Campaign:</span>
             <select
               value={currentEngagement?.id}
               onChange={(e) => {
@@ -180,7 +180,7 @@ export const EngagementDetailPage: React.FC = () => {
                   navigate(`/engagements/${found.id}`);
                 }
               }}
-              className="bg-charcoal-900 border border-charcoal-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-electric-500"
+              className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-[#5B46F6]"
             >
               {engagements.map((eng) => (
                 <option key={eng.id} value={eng.id}>
@@ -195,7 +195,7 @@ export const EngagementDetailPage: React.FC = () => {
       {loading ? (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-48 rounded-2xl bg-charcoal-900 border border-charcoal-800 animate-pulse" />
+            <div key={i} className="h-48 rounded-2xl bg-white border border-slate-200 animate-pulse" />
           ))}
         </div>
       ) : currentEngagement ? (
@@ -205,21 +205,21 @@ export const EngagementDetailPage: React.FC = () => {
           <EngagementTimeline currentStatus={currentEngagement.status} />
 
           {/* Quick Info & Action Strip */}
-          <div className="p-6 rounded-3xl bg-charcoal-900 border border-charcoal-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
               <img
                 src={currentEngagement.creator?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}
                 alt={currentEngagement.creator?.display_name}
-                className="w-13 h-13 rounded-2xl object-cover border border-charcoal-700 ring-2 ring-electric-600/20 shrink-0"
+                className="w-13 h-13 rounded-2xl object-cover border border-slate-200 ring-2 ring-[#5B46F6]/15 shrink-0"
               />
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-display font-bold text-white text-base">
+                  <h3 className="font-display font-bold text-slate-900 text-base">
                     {currentEngagement.creator?.display_name}
                   </h3>
-                  <span className="text-xs text-slate-400">• {currentEngagement.creator?.title}</span>
+                  <span className="text-xs text-slate-500">• {currentEngagement.creator?.title}</span>
                 </div>
-                <h4 className="text-xs text-electric-300 font-medium mt-0.5">
+                <h4 className="text-xs text-[#5B46F6] font-medium mt-0.5">
                   Campaign: {currentEngagement.brief?.title || 'Creative Campaign'}
                 </h4>
               </div>
@@ -229,16 +229,16 @@ export const EngagementDetailPage: React.FC = () => {
               {/* Creator submit deliverable action */}
               <button
                 onClick={() => setUploadModalOpen(true)}
-                className="px-4 py-2 rounded-xl bg-charcoal-800 hover:bg-charcoal-750 text-slate-200 text-xs font-semibold border border-charcoal-700 flex items-center gap-1.5 transition-all"
+                className="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold border border-slate-200 shadow-sm flex items-center gap-1.5 transition-all"
               >
-                <Upload className="w-3.5 h-3.5 text-electric-400" />
+                <Upload className="w-3.5 h-3.5 text-[#5B46F6]" />
                 <span>Submit Deliverable (v{(currentEngagement.submissions?.length || 0) + 1})</span>
               </button>
 
               {/* Review Creator Action */}
               <button
                 onClick={() => setReviewModalOpen(true)}
-                className="px-4 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-semibold border border-amber-500/40 flex items-center gap-1.5 transition-all"
+                className="px-4 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-semibold border border-amber-200 flex items-center gap-1.5 transition-all"
               >
                 <Star className="w-3.5 h-3.5 fill-current" />
                 <span>Review Creator</span>
@@ -248,7 +248,7 @@ export const EngagementDetailPage: React.FC = () => {
               {currentEngagement.status === 'approved' && (
                 <button
                   onClick={() => handleTransitionStatus('delivered')}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-subtle"
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>Mark as Final Delivered</span>
@@ -260,7 +260,7 @@ export const EngagementDetailPage: React.FC = () => {
           {/* Submissions & Deliverables Log */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-display font-bold text-lg text-white">
+              <h3 className="font-display font-bold text-lg text-slate-900">
                 Deliverable Version Log ({currentEngagement.submissions?.length || 0})
               </h3>
               <span className="text-xs text-slate-500">
@@ -280,13 +280,13 @@ export const EngagementDetailPage: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <div className="p-10 text-center rounded-2xl bg-charcoal-900 border border-charcoal-800 space-y-3">
-                <p className="text-xs text-slate-400">
+              <div className="p-10 text-center rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
+                <p className="text-xs text-slate-500">
                   No deliverables submitted yet. The creator has been invited and can upload Version 1 above.
                 </p>
                 <button
                   onClick={() => setUploadModalOpen(true)}
-                  className="px-4 py-2 rounded-xl bg-electric-600 hover:bg-electric-500 text-white text-xs font-semibold"
+                  className="px-4 py-2 rounded-xl bg-[#5B46F6] hover:bg-[#4F46E5] text-white text-xs font-semibold shadow-sm"
                 >
                   Submit Version 1 Draft
                 </button>
@@ -295,15 +295,15 @@ export const EngagementDetailPage: React.FC = () => {
           </div>
 
           {/* Live Project Chat Room */}
-          <div className="p-6 rounded-3xl bg-charcoal-900 border border-charcoal-800 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-charcoal-800">
+          <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-electric-400" />
-                <h3 className="font-display font-bold text-white text-base">
+                <MessageSquare className="w-4 h-4 text-[#5B46F6]" />
+                <h3 className="font-display font-bold text-slate-900 text-base">
                   Project Discussion & Revisions Room
                 </h3>
               </div>
-              <span className="text-xs text-slate-400">Live Brand ↔ Creator Dialogue</span>
+              <span className="text-xs text-slate-500">Live Brand ↔ Creator Dialogue</span>
             </div>
 
             {/* Messages List */}
@@ -318,15 +318,15 @@ export const EngagementDetailPage: React.FC = () => {
                   return (
                     <div key={m.id} className={`flex flex-col ${isBrand ? 'items-end' : 'items-start'}`}>
                       <div className="flex items-center gap-1.5 mb-1 px-1 text-[10px] text-slate-500">
-                        <span className="font-semibold text-slate-400">{m.sender_name}</span>
+                        <span className="font-semibold text-slate-700">{m.sender_name}</span>
                         <span>•</span>
                         <span>{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                       <div
                         className={`max-w-[75%] rounded-2xl p-3 text-xs leading-relaxed ${
                           isBrand
-                            ? 'bg-electric-600 text-white rounded-br-none shadow-glow-violet'
-                            : 'bg-charcoal-800 text-slate-200 rounded-bl-none border border-charcoal-700/60'
+                            ? 'bg-[#5B46F6] text-white rounded-br-none shadow-sm'
+                            : 'bg-slate-100 text-slate-800 rounded-bl-none border border-slate-200'
                         }`}
                       >
                         <p className="whitespace-pre-wrap">{m.content}</p>
@@ -338,18 +338,18 @@ export const EngagementDetailPage: React.FC = () => {
             </div>
 
             {/* Message Input Form */}
-            <form onSubmit={handleSendChatMessage} className="flex items-center gap-2 pt-2 border-t border-charcoal-800">
+            <form onSubmit={handleSendChatMessage} className="flex items-center gap-2 pt-2 border-t border-slate-100">
               <input
                 type="text"
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Type a revision note, feedback, or question..."
-                className="flex-1 bg-charcoal-950 border border-charcoal-800 focus:border-electric-500 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none"
+                className="flex-1 bg-slate-50 border border-slate-200 focus:border-[#5B46F6] rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none"
               />
               <button
                 type="submit"
                 disabled={!chatInput.trim() || isSendingChat}
-                className="px-4 py-2.5 rounded-xl bg-electric-600 hover:bg-electric-500 text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-all shadow-glow-violet"
+                className="px-4 py-2.5 rounded-xl bg-[#5B46F6] hover:bg-[#4F46E5] text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-all shadow-sm"
               >
                 {isSendingChat ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                 <span>Send</span>
@@ -363,21 +363,21 @@ export const EngagementDetailPage: React.FC = () => {
         </div>
       ) : (
         /* Empty State */
-        <div className="p-12 text-center rounded-2xl bg-charcoal-900 border border-charcoal-800 space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-charcoal-800 flex items-center justify-center text-slate-400 mx-auto">
+        <div className="p-12 text-center rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mx-auto">
             <FolderCheck className="w-6 h-6" />
           </div>
           <div className="space-y-1">
-            <h3 className="font-display font-bold text-white text-base">
+            <h3 className="font-display font-bold text-slate-900 text-base">
               No active campaign engagements found
             </h3>
-            <p className="text-xs text-slate-400 max-w-md mx-auto">
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
               Start by building a creative brief, matching with creators, and sending an invitation.
             </p>
           </div>
           <Link
             to="/brief-builder"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-electric-600 hover:bg-electric-500 text-white text-xs font-semibold shadow-glow-violet transition-all"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#5B46F6] hover:bg-[#4F46E5] text-white text-xs font-semibold shadow-sm transition-all"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>Create Campaign Brief</span>
@@ -394,8 +394,8 @@ export const EngagementDetailPage: React.FC = () => {
       >
         <form onSubmit={handleUploadSubmission} className="space-y-4 text-xs">
           <div>
-            <label className="text-slate-300 block mb-1 font-medium">Upload File (MP4, PNG, JPG, JSON)</label>
-            <div className="p-4 border-2 border-dashed border-charcoal-700 hover:border-electric-500 rounded-xl bg-charcoal-950/50 text-center cursor-pointer transition-all">
+            <label className="text-slate-700 block mb-1 font-medium">Upload File (MP4, PNG, JPG, JSON)</label>
+            <div className="p-4 border-2 border-dashed border-slate-300 hover:border-[#5B46F6] rounded-xl bg-slate-50/50 text-center cursor-pointer transition-all">
               <input
                 type="file"
                 id="deliverable-file"
@@ -406,8 +406,8 @@ export const EngagementDetailPage: React.FC = () => {
                 }}
               />
               <label htmlFor="deliverable-file" className="cursor-pointer block">
-                <Upload className="w-6 h-6 text-electric-400 mx-auto mb-1.5" />
-                <span className="text-slate-200 font-semibold block">
+                <Upload className="w-6 h-6 text-[#5B46F6] mx-auto mb-1.5" />
+                <span className="text-slate-800 font-semibold block">
                   {uploadedFile ? uploadedFile.name : 'Click to select render output from disk'}
                 </span>
                 <span className="text-[10px] text-slate-500">
@@ -418,24 +418,24 @@ export const EngagementDetailPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="text-slate-300 block mb-1 font-medium">Or Provide External Media URL</label>
+            <label className="text-slate-700 block mb-1 font-medium">Or Provide External Media URL</label>
             <input
               type="url"
               value={newSubmissionMedia}
               onChange={(e) => setNewSubmissionMedia(e.target.value)}
               placeholder="https://images.unsplash.com/..."
-              className="w-full bg-charcoal-950 border border-charcoal-700 rounded-xl px-3 py-2 text-white"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-[#5B46F6]"
             />
           </div>
 
           <div>
-            <label className="text-slate-300 block mb-1 font-medium">Creator Production Notes</label>
+            <label className="text-slate-700 block mb-1 font-medium">Creator Production Notes</label>
             <textarea
               rows={3}
               value={newSubmissionNotes}
               onChange={(e) => setNewSubmissionNotes(e.target.value)}
               placeholder="Explain changes made, model settings used, or questions for the brand..."
-              className="w-full bg-charcoal-950 border border-charcoal-700 rounded-xl p-3 text-white resize-none"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#5B46F6] resize-none"
             />
           </div>
 
@@ -443,14 +443,14 @@ export const EngagementDetailPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setUploadModalOpen(false)}
-              className="px-4 py-2 rounded-xl bg-charcoal-800 hover:bg-charcoal-750 text-slate-300 font-semibold"
+              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold border border-slate-200"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting || isUploadingFile || (!newSubmissionMedia.trim() && !uploadedFile)}
-              className="px-5 py-2 rounded-xl bg-electric-600 hover:bg-electric-500 text-white font-semibold shadow-glow-violet transition-all flex items-center gap-1.5 disabled:opacity-50"
+              className="px-5 py-2 rounded-xl bg-[#5B46F6] hover:bg-[#4F46E5] text-white font-semibold shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50"
             >
               {isSubmitting || isUploadingFile ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />

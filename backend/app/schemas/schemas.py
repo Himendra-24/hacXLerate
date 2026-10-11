@@ -18,22 +18,39 @@ class PortfolioProjectBase(BaseModel):
     thumbnail_url: Optional[str] = None
     content_type: str = "video"  # "video", "animation", "image", "cgi", "motion"
     specialization: str
-    tools_used: List[str] = []
-    model_versions: Dict[str, str] = {}
-    skills_demonstrated: List[str] = []
-    workflow_steps: List[Dict[str, Any]] = []
-    aspect_ratios: List[str] = ["16:9"]
-    commercial_use_status: str = "Commercial Rights Granted"
-    evidence_status: str = "Self-reported"
+    tools_used: Optional[List[str]] = Field(default_factory=list)
+    model_versions: Optional[Dict[str, str]] = Field(default_factory=dict)
+    skills_demonstrated: Optional[List[str]] = Field(default_factory=list)
+    workflow_steps: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
+    aspect_ratios: Optional[List[str]] = Field(default_factory=lambda: ["16:9"])
+    commercial_use_status: Optional[str] = "Commercial Rights Granted"
+    evidence_status: Optional[str] = "Self-reported"
     prompt_summary: Optional[str] = None
 
 class PortfolioProjectCreate(PortfolioProjectBase):
     pass
 
+class PortfolioProjectUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    media_url: Optional[str] = None
+    thumbnail_url: Optional[str] = None
+    content_type: Optional[str] = None
+    specialization: Optional[str] = None
+    tools_used: Optional[List[str]] = None
+    model_versions: Optional[Dict[str, str]] = None
+    skills_demonstrated: Optional[List[str]] = None
+    workflow_steps: Optional[List[Dict[str, Any]]] = None
+    aspect_ratios: Optional[List[str]] = None
+    commercial_use_status: Optional[str] = None
+    evidence_status: Optional[str] = None
+    prompt_summary: Optional[str] = None
+
+
 class PortfolioProjectResponse(PortfolioProjectBase):
-    id: str
-    creator_id: str
-    created_at: datetime.datetime
+    id: Optional[str] = "mock-proj-id"
+    creator_id: Optional[str] = "mock-creator-id"
+    created_at: Optional[datetime.datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -88,15 +105,15 @@ class CreatorProfileBase(BaseModel):
     bio: str
     avatar_url: Optional[str] = None
     location: Optional[str] = "Remote"
-    specializations: List[str] = []
-    skills: List[str] = []
-    tools: List[str] = []
+    specializations: Optional[List[str]] = Field(default_factory=list)
+    skills: Optional[List[str]] = Field(default_factory=list)
+    tools: Optional[List[str]] = Field(default_factory=list)
     rate_min: Optional[float] = None
     rate_max: Optional[float] = None
-    rating_avg: float = 4.9
-    reviews_count: int = 1
-    availability_status: str = "Available"
-    featured: bool = False
+    rating_avg: Optional[float] = 5.0
+    reviews_count: Optional[int] = 0
+    availability_status: Optional[str] = "Available"
+    featured: Optional[bool] = False
 
 class CreatorProfileCreate(CreatorProfileBase):
     pass
@@ -117,13 +134,46 @@ class CreatorProfileUpdate(BaseModel):
     availability_status: Optional[str] = None
 
 class CreatorProfileResponse(CreatorProfileBase):
-    id: str
+    id: Optional[str] = "mock-creator-id"
     user_id: Optional[str] = None
+    created_at: Optional[datetime.datetime] = None
+    updated_at: Optional[datetime.datetime] = None
+    portfolio_projects: List[PortfolioProjectResponse] = Field(default_factory=list)
+    verification_records: List[VerificationRecordResponse] = Field(default_factory=list)
+    reviews: List[ReviewResponse] = Field(default_factory=list)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ==================== ORGANIZATION / BRAND SCHEMAS ====================
+
+class BrandBase(BaseModel):
+    company_name: str
+    type: str = "brand"  # "brand" | "agency"
+    industry: Optional[str] = None
+    website: Optional[str] = None
+    logo_url: Optional[str] = None
+    description: Optional[str] = None
+    verified: bool = False
+
+class BrandCreate(BrandBase):
+    owner_user_id: Optional[str] = None
+
+class BrandUpdate(BaseModel):
+    company_name: Optional[str] = None
+    type: Optional[str] = None
+    industry: Optional[str] = None
+    website: Optional[str] = None
+    logo_url: Optional[str] = None
+    description: Optional[str] = None
+    verified: Optional[bool] = None
+
+class BrandResponse(BrandBase):
+    id: str
+    owner_user_id: Optional[str] = None
     created_at: datetime.datetime
-    updated_at: datetime.datetime
-    portfolio_projects: List[PortfolioProjectResponse] = []
-    verification_records: List[VerificationRecordResponse] = []
-    reviews: List[ReviewResponse] = []
+    updated_at: Optional[datetime.datetime] = None
+    open_briefs_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -147,10 +197,13 @@ class BriefBase(BaseModel):
     budget_min: Optional[float] = None
     budget_max: Optional[float] = None
     deadline: Optional[str] = None
-    status: str = "draft"
+    status: str = "open"  # "draft", "open", "closed"
+    visibility: str = "public"  # "public", "private"
+    organization_id: Optional[str] = None
 
 class BriefCreate(BriefBase):
     brand_user_id: Optional[str] = None
+    organization_id: Optional[str] = None
 
 class BriefUpdate(BaseModel):
     title: Optional[str] = None
@@ -169,14 +222,120 @@ class BriefUpdate(BaseModel):
     budget_max: Optional[float] = None
     deadline: Optional[str] = None
     status: Optional[str] = None
+    visibility: Optional[str] = None
+    organization_id: Optional[str] = None
 
 class BriefResponse(BriefBase):
     id: str
     brand_user_id: Optional[str] = None
+    organization_id: Optional[str] = None
     created_at: datetime.datetime
     updated_at: datetime.datetime
+    organization: Optional[BrandResponse] = None
+    applications_count: Optional[int] = 0
 
     model_config = ConfigDict(from_attributes=True)
+
+class BrandDetailResponse(BrandResponse):
+    open_briefs: List[BriefResponse] = []
+
+
+# ==================== AUTH & USER SCHEMAS ====================
+
+class UserBase(BaseModel):
+    display_name: str
+    email: str
+    role: str = "creator"  # "creator" | "brand"
+    avatar_url: Optional[str] = None
+
+class UserRegister(BaseModel):
+    display_name: str
+    email: str
+    password: str
+    role: str = "creator"  # "creator" | "brand"
+    avatar_url: Optional[str] = None
+    # Creator onboarding fields
+    title: Optional[str] = None
+    bio: Optional[str] = None
+    location: Optional[str] = None
+    specializations: Optional[List[str]] = None
+    skills: Optional[List[str]] = None
+    tools: Optional[List[str]] = None
+    rate_min: Optional[float] = None
+    rate_max: Optional[float] = None
+    availability_status: Optional[str] = "Available"
+    initial_project: Optional[dict] = None
+    # Brand/Organization onboarding fields
+    company_name: Optional[str] = None
+    type: Optional[str] = "brand"
+    industry: Optional[str] = None
+    website: Optional[str] = None
+    logo_url: Optional[str] = None
+    description: Optional[str] = None
+    preferred_specializations: Optional[List[str]] = None
+    budget_range: Optional[str] = None
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class UserResponse(UserBase):
+    id: str
+    onboarding_completed: bool = False
+    created_at: datetime.datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class AuthResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+    creator_profile: Optional[CreatorProfileResponse] = None
+    organization: Optional[BrandResponse] = None
+
+class OnboardingUpdate(BaseModel):
+    # Creator fields
+    title: Optional[str] = None
+    bio: Optional[str] = None
+    location: Optional[str] = None
+    specializations: Optional[List[str]] = None
+    skills: Optional[List[str]] = None
+    tools: Optional[List[str]] = None
+    rate_min: Optional[float] = None
+    rate_max: Optional[float] = None
+    availability_status: Optional[str] = None
+    # Brand fields
+    company_name: Optional[str] = None
+    type: Optional[str] = None
+    industry: Optional[str] = None
+    website: Optional[str] = None
+    logo_url: Optional[str] = None
+    description: Optional[str] = None
+
+
+# ==================== BRIEF APPLICATION SCHEMAS ====================
+
+class BriefApplicationBase(BaseModel):
+    pitch: str
+    proposed_rate: Optional[float] = None
+    portfolio_sample_urls: List[str] = []
+
+class BriefApplicationCreate(BriefApplicationBase):
+    creator_id: Optional[str] = None
+
+class BriefApplicationStatusUpdate(BaseModel):
+    status: str  # "pending", "reviewed", "accepted", "declined"
+
+class BriefApplicationResponse(BriefApplicationBase):
+    id: str
+    brief_id: str
+    creator_id: str
+    status: str = "pending"
+    created_at: datetime.datetime
+    creator: Optional[CreatorProfileResponse] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 # AI Brief Structuring
 class RawIdeaRequest(BaseModel):

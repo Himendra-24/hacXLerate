@@ -16,7 +16,8 @@ import {
   Target,
   ArrowUpRight,
   Compass,
-  MapPin
+  MapPin,
+  Frame
 } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
@@ -137,7 +138,7 @@ export const HomePage: React.FC = () => {
             <div className="flex flex-wrap items-center gap-4 pt-2">
               <Link
                 to="/discover"
-                className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-[#6366F1] hover:bg-[#4F46E5] text-white text-xs sm:text-sm font-semibold shadow-glow-violet transition-all active:scale-95"
+                className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-[#5B46F6] hover:bg-[#4F46E5] text-white text-xs sm:text-sm font-semibold shadow-glow-violet transition-all active:scale-95"
               >
                 <span>Find your creator</span>
                 <ArrowRight className="w-4 h-4" />
@@ -306,7 +307,7 @@ export const HomePage: React.FC = () => {
             </span>
             <h2 className="font-display font-extrabold text-3xl sm:text-5xl text-slate-900 tracking-tight">
               Great creative starts with the{' '}
-              <span className="text-[#6366F1]">right match.</span>
+              <span className="text-[#5B46F6]">right match.</span>
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-xl mx-auto">
               Turn your ideas into powerful content by collaborating with verified AI creators who have the skills, tools and experience to bring them to life.
@@ -318,7 +319,7 @@ export const HomePage: React.FC = () => {
             
             {/* Left Column: Brief Builder Highlights */}
             <div className="lg:col-span-5 space-y-6">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-100 border border-violet-200 text-[#6366F1] text-xs font-semibold">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-100 border border-violet-200 text-[#5B46F6] text-xs font-semibold">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>AI-Assisted Brief Builder</span>
               </div>
@@ -335,25 +336,25 @@ export const HomePage: React.FC = () => {
               {/* Checklist */}
               <div className="space-y-3 pt-2 text-xs font-medium text-slate-800">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-[#6366F1] flex items-center justify-center text-white shrink-0">
+                  <div className="w-4 h-4 rounded-full bg-[#5B46F6] flex items-center justify-center text-white shrink-0">
                     <Check className="w-2.5 h-2.5 stroke-[3]" />
                   </div>
                   <span>Structured creative brief</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-[#6366F1] flex items-center justify-center text-white shrink-0">
+                  <div className="w-4 h-4 rounded-full bg-[#5B46F6] flex items-center justify-center text-white shrink-0">
                     <Check className="w-2.5 h-2.5 stroke-[3]" />
                   </div>
                   <span>Editable fields</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-[#6366F1] flex items-center justify-center text-white shrink-0">
+                  <div className="w-4 h-4 rounded-full bg-[#5B46F6] flex items-center justify-center text-white shrink-0">
                     <Check className="w-2.5 h-2.5 stroke-[3]" />
                   </div>
                   <span>Tailored creator recommendations</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-[#6366F1] flex items-center justify-center text-white shrink-0">
+                  <div className="w-4 h-4 rounded-full bg-[#5B46F6] flex items-center justify-center text-white shrink-0">
                     <Check className="w-2.5 h-2.5 stroke-[3]" />
                   </div>
                   <span>Saves time and avoids miscommunication</span>
@@ -364,7 +365,7 @@ export const HomePage: React.FC = () => {
               <div className="pt-4 flex flex-col sm:flex-row items-start sm:items-center gap-6">
                 <Link
                   to="/brief-builder"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#6366F1] hover:bg-[#4F46E5] text-white text-xs font-semibold shadow-glow-violet transition-all active:scale-95"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#5B46F6] hover:bg-[#4F46E5] text-white text-xs font-semibold shadow-glow-violet transition-all active:scale-95"
                 >
                   <span>Generate your brief</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -390,11 +391,11 @@ export const HomePage: React.FC = () => {
                 {/* Mockup Window Header */}
                 <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-6 h-6 rounded-md bg-[#6366F1] flex items-center justify-center text-white">
-                      <Sparkles className="w-3.5 h-3.5" />
+                    <div className="w-6 h-6 rounded-md bg-[#5B46F6] flex items-center justify-center text-white shadow-glow-violet-sm">
+                      <Frame className="w-3.5 h-3.5" />
                     </div>
-                    <span className="font-display font-bold text-slate-800 text-xs">
-                      Cre8Match<span className="text-[#6366F1]">.AI</span>
+                    <span className="font-display font-extrabold text-slate-900 text-xs tracking-tight">
+                      UNFRAME
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -408,7 +409,7 @@ export const HomePage: React.FC = () => {
                   
                   {/* Left Mini Sidebar from Reference Image */}
                   <div className="w-full md:w-44 border-b md:border-b-0 md:border-r border-slate-100 p-4 space-y-1 text-[11px] bg-slate-50/40 shrink-0">
-                    <button className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-violet-100 text-[#6366F1] font-semibold text-left">
+                    <button className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-violet-100 text-[#5B46F6] font-semibold text-left">
                       <span>✨</span>
                       <span>Create Brief</span>
                     </button>
@@ -447,7 +448,7 @@ export const HomePage: React.FC = () => {
                           rows={2}
                           value={demoIdea}
                           onChange={(e) => setDemoIdea(e.target.value)}
-                          className="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-[11px] text-slate-800 focus:outline-none focus:border-[#6366F1] resize-none leading-relaxed"
+                          className="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-[11px] text-slate-800 focus:outline-none focus:border-[#5B46F6] resize-none leading-relaxed"
                         />
                       </div>
 
@@ -455,10 +456,10 @@ export const HomePage: React.FC = () => {
                         <button
                           onClick={handleStructureDemo}
                           disabled={isStructuringDemo}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#6366F1] hover:bg-[#4F46E5] text-white text-[10px] font-semibold transition-all shadow-sm disabled:opacity-50"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#5B46F6] hover:bg-[#4F46E5] text-white text-[10px] font-semibold transition-all shadow-sm disabled:opacity-50"
                         >
                           <Sparkles className="w-3 h-3" />
-                          <span>{isStructuringDemo ? 'Structuring...' : 'Structure with AI'}</span>
+                          <span>{isStructuringDemo ? 'Structuring...' : 'Generate with AI'}</span>
                         </button>
                       </div>
                     </div>
@@ -520,7 +521,7 @@ export const HomePage: React.FC = () => {
                         {demoBrief.tags.map((t, idx) => (
                           <span
                             key={idx}
-                            className="text-[11px] px-2.5 py-0.5 rounded-md bg-violet-50 text-[#6366F1] border border-violet-200 font-medium"
+                            className="text-[11px] px-2.5 py-0.5 rounded-md bg-violet-50 text-[#5B46F6] border border-violet-200 font-medium"
                           >
                             {t}
                           </span>
@@ -610,7 +611,7 @@ export const HomePage: React.FC = () => {
 
                   {/* Match Score Badge in top-right */}
                   <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-white text-slate-900 text-[11px] font-bold shadow-md flex items-center gap-1">
-                    <span className="text-[#6366F1]">{card.matchScore}/100</span>
+                    <span className="text-[#5B46F6]">{card.matchScore}/100</span>
                     <span className="text-slate-500 font-normal">Match</span>
                   </div>
                 </div>
@@ -630,7 +631,7 @@ export const HomePage: React.FC = () => {
                         <div>
                           <div className="flex items-center gap-1">
                             <span className="font-bold text-sm text-slate-900">{card.name}</span>
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#6366F1] fill-violet-100" />
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#5B46F6] fill-violet-100" />
                           </div>
                           <span className="text-[11px] text-slate-500 block">{card.role}</span>
                         </div>
@@ -681,7 +682,7 @@ export const HomePage: React.FC = () => {
           {/* Header */}
           <div className="text-center max-w-2xl mx-auto space-y-3">
             <span className="text-[11px] font-bold tracking-[0.2em] uppercase text-slate-400 block">
-              Why Cre8Match AI
+              Why UNFRAME
             </span>
             <h2 className="font-display font-extrabold text-3xl sm:text-5xl text-slate-900 tracking-tight leading-tight">
               More than a portfolio. <br />
@@ -699,10 +700,10 @@ export const HomePage: React.FC = () => {
             <div className="p-8 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:shadow-md transition-shadow space-y-5 flex flex-col justify-between group">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="w-12 h-12 rounded-2xl bg-violet-50 text-[#6366F1] flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-2xl bg-violet-50 text-[#5B46F6] flex items-center justify-center">
                     <Layers className="w-6 h-6" />
                   </div>
-                  <ArrowUpRight className="w-5 h-5 text-slate-300 group-hover:text-[#6366F1] transition-colors" />
+                  <ArrowUpRight className="w-5 h-5 text-slate-300 group-hover:text-[#5B46F6] transition-colors" />
                 </div>
                 <h3 className="font-display font-bold text-lg text-slate-900">
                   Workflow recipes
@@ -717,10 +718,10 @@ export const HomePage: React.FC = () => {
             <div className="p-8 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:shadow-md transition-shadow space-y-5 flex flex-col justify-between group">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="w-12 h-12 rounded-2xl bg-violet-50 text-[#6366F1] flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-2xl bg-violet-50 text-[#5B46F6] flex items-center justify-center">
                     <Target className="w-6 h-6" />
                   </div>
-                  <ArrowUpRight className="w-5 h-5 text-slate-300 group-hover:text-[#6366F1] transition-colors" />
+                  <ArrowUpRight className="w-5 h-5 text-slate-300 group-hover:text-[#5B46F6] transition-colors" />
                 </div>
                 <h3 className="font-display font-bold text-lg text-slate-900">
                   Explainable matches
@@ -735,10 +736,10 @@ export const HomePage: React.FC = () => {
             <div className="p-8 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:shadow-md transition-shadow space-y-5 flex flex-col justify-between group">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="w-12 h-12 rounded-2xl bg-violet-50 text-[#6366F1] flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-2xl bg-violet-50 text-[#5B46F6] flex items-center justify-center">
                     <ShieldCheck className="w-6 h-6" />
                   </div>
-                  <ArrowUpRight className="w-5 h-5 text-slate-300 group-hover:text-[#6366F1] transition-colors" />
+                  <ArrowUpRight className="w-5 h-5 text-slate-300 group-hover:text-[#5B46F6] transition-colors" />
                 </div>
                 <h3 className="font-display font-bold text-lg text-slate-900">
                   Evidence-based trust
@@ -789,7 +790,7 @@ export const HomePage: React.FC = () => {
             <div className="flex flex-wrap items-center gap-4 pt-2">
               <Link
                 to="/brief-builder"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-[#6366F1] hover:bg-[#4F46E5] text-white text-xs sm:text-sm font-semibold shadow-glow-violet transition-all active:scale-95"
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-[#5B46F6] hover:bg-[#4F46E5] text-white text-xs sm:text-sm font-semibold shadow-glow-violet transition-all active:scale-95"
               >
                 <span>Build your first brief</span>
                 <ArrowRight className="w-4 h-4" />

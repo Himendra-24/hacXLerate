@@ -1,6 +1,6 @@
-# Cre8Match AI — Product Requirements Document (PRD)
+# UNFRAME — Product Requirements Document (PRD)
 
-**Tagline:** The right creative. The right proof. The right match.  
+**Tagline:** Find the talent behind the vision.  
 **Platform:** Kampus.VC AI Content Creator Marketplace  
 **Core Differentiator:** Job-to-Evidence Matching (Creative Fit Intelligence)
 
@@ -13,7 +13,7 @@ Brands seeking AI-generated content face a paradox: AI portfolios are visually d
 3. Has verified commercial-use rights, model licensing clarity, or unencumbered asset provenance.
 4. Matches the exact technical and stylistic needs of an ambiguous, evolving brand brief.
 
-**Cre8Match AI** solves this by converting rough ideas into structured creative briefs, comparing them against verified creator skills and portfolio evidence, ranking candidates via explainable multi-factor scoring, and transparently highlighting fit, missing requirements, and licensing gaps.
+**UNFRAME** solves this by converting rough ideas into structured creative briefs, comparing them against verified creator skills and portfolio evidence, ranking candidates via explainable multi-factor scoring, and transparently highlighting fit, missing requirements, and licensing gaps.
 
 ---
 

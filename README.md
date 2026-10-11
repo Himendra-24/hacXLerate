@@ -1,4 +1,4 @@
-# Cre8Match AI — The Right Creative. The Right Proof. The Right Match.
+# UNFRAME — Find the talent behind the vision.
 
 > **Kampus.VC AI Content Creator Marketplace Hackathon MVP**  
 > **Core Differentiator:** Job-to-Evidence Matching via *Creative Fit Intelligence™*
@@ -15,7 +15,7 @@
 ## 🎯 The Product Thesis
 Brands seeking AI-generated content face a major challenge: **Visual appearance alone does not reveal whether a creator has the technical workflow, aspect ratio experience, or commercial licensing clarity needed to deliver.**
 
-**Cre8Match AI** solves this by:
+**UNFRAME** solves this by:
 1. Converting rough campaign thoughts into structured, verified briefs.
 2. Comparing brief requirements against documented creator skills and portfolio evidence.
 3. Ranking candidates using an explainable 4-factor compatibility formula with hard mandatory requirement gating.

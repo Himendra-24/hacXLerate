@@ -16,12 +16,35 @@ class User(Base):
     role = Column(String, default="brand")  # "brand", "creator", "admin"
     display_name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
+    password_hash = Column(String, nullable=True)
     avatar_url = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True)
+    onboarding_completed = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     creator_profile = relationship("CreatorProfile", back_populates="user", uselist=False)
     briefs = relationship("Brief", back_populates="brand_user")
     shortlists = relationship("Shortlist", back_populates="brand_user")
+    owned_brands = relationship("Brand", back_populates="owner")
+
+
+class Brand(Base):
+    __tablename__ = "brands"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    owner_user_id = Column(String, ForeignKey("users.id"), nullable=True)
+    company_name = Column(String, nullable=False)
+    type = Column(String, default="brand")  # "brand" | "agency"
+    industry = Column(String, nullable=True)
+    website = Column(String, nullable=True)
+    logo_url = Column(String, nullable=True)
+    description = Column(Text, nullable=True)
+    verified = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+    owner = relationship("User", back_populates="owned_brands")
+    briefs = relationship("Brief", back_populates="organization", cascade="all, delete-orphan")
 
 
 class CreatorProfile(Base):
@@ -52,6 +75,7 @@ class CreatorProfile(Base):
     engagements = relationship("Engagement", back_populates="creator")
     shortlists = relationship("Shortlist", back_populates="creator")
     reviews = relationship("Review", back_populates="creator", cascade="all, delete-orphan")
+    applications = relationship("BriefApplication", back_populates="creator", cascade="all, delete-orphan")
 
 
 class PortfolioProject(Base):
@@ -103,6 +127,7 @@ class Brief(Base):
 
     id = Column(String, primary_key=True, default=generate_uuid)
     brand_user_id = Column(String, ForeignKey("users.id"), nullable=True)
+    organization_id = Column(String, ForeignKey("brands.id"), nullable=True)
     title = Column(String, nullable=False)
     objective = Column(Text, nullable=False)
     raw_idea = Column(Text, nullable=True)
@@ -119,13 +144,32 @@ class Brief(Base):
     budget_min = Column(Float, nullable=True)
     budget_max = Column(Float, nullable=True)
     deadline = Column(String, nullable=True)
-    status = Column(String, default="draft")       # "draft", "published", "in_progress", "completed"
+    status = Column(String, default="open")        # "draft", "open", "closed"
+    visibility = Column(String, default="public")  # "public", "private"
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
     brand_user = relationship("User", back_populates="briefs")
+    organization = relationship("Brand", back_populates="briefs")
     engagements = relationship("Engagement", back_populates="brief")
     shortlists = relationship("Shortlist", back_populates="brief")
+    applications = relationship("BriefApplication", back_populates="brief", cascade="all, delete-orphan")
+
+
+class BriefApplication(Base):
+    __tablename__ = "brief_applications"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    brief_id = Column(String, ForeignKey("briefs.id"), nullable=False)
+    creator_id = Column(String, ForeignKey("creator_profiles.id"), nullable=False)
+    pitch = Column(Text, nullable=False)
+    proposed_rate = Column(Float, nullable=True)
+    portfolio_sample_urls = Column(JSON, default=list)
+    status = Column(String, default="pending")  # "pending", "reviewed", "accepted", "declined"
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    brief = relationship("Brief", back_populates="applications")
+    creator = relationship("CreatorProfile", back_populates="applications")
 
 
 class Shortlist(Base):

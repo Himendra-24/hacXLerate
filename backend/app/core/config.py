@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Settings(BaseModel):
-    PROJECT_NAME: str = "Cre8Match AI"
+    PROJECT_NAME: str = "UNFRAME"
     API_V1_STR: str = "/api/v1"
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./cre8match.db")
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")

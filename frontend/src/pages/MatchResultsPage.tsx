@@ -118,45 +118,45 @@ export const MatchResultsPage: React.FC = () => {
       
       {/* Header */}
       <div>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-charcoal-900 border border-charcoal-800 text-slate-300 text-xs mb-2">
-          <Compass className="w-3.5 h-3.5 text-electric-400" />
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-50 border border-violet-100 text-[#5B46F6] text-xs font-semibold mb-2">
+          <Compass className="w-3.5 h-3.5 text-[#5B46F6]" />
           <span>Creative Fit Intelligence™ Matching</span>
         </div>
-        <h1 className="font-display font-extrabold text-3xl text-white">
+        <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-slate-900">
           Ranked Creator Fit Recommendations
         </h1>
-        <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
+        <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
           Deterministic 4-factor scoring matching your brief specifications against verified creator skills, tools, and portfolio project evidence.
         </p>
       </div>
 
       {/* Brief Summary Bar & Switcher */}
       {currentBrief && (
-        <div className="rounded-2xl bg-charcoal-900 border border-charcoal-800 p-5 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-charcoal-800">
+        <div className="rounded-2xl bg-white border border-slate-200/90 shadow-sm p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
             <div className="flex items-center gap-2.5">
-              <span className="p-1.5 rounded-lg bg-electric-950 text-electric-400 border border-electric-800">
+              <span className="p-2 rounded-lg bg-violet-50 text-[#5B46F6] border border-violet-100">
                 <FileText className="w-4 h-4" />
               </span>
               <div>
-                <h3 className="font-display font-bold text-white text-base">
+                <h3 className="font-display font-bold text-slate-900 text-base">
                   {currentBrief.title}
                 </h3>
-                <p className="text-xs text-slate-400 line-clamp-1">{currentBrief.objective}</p>
+                <p className="text-xs text-slate-500 line-clamp-1">{currentBrief.objective}</p>
               </div>
             </div>
 
             {/* Brief Switcher */}
             {briefs.length > 1 && (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400 whitespace-nowrap">Switch Brief:</span>
+                <span className="text-xs text-slate-500 whitespace-nowrap">Switch Brief:</span>
                 <select
                   value={currentBrief.id}
                   onChange={(e) => {
                     const selected = briefs.find((b) => b.id === e.target.value);
                     if (selected) setCurrentBrief(selected);
                   }}
-                  className="bg-charcoal-950 border border-charcoal-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-electric-500"
+                  className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-[#5B46F6]"
                 >
                   {briefs.map((b) => (
                     <option key={b.id} value={b.id}>
@@ -170,30 +170,30 @@ export const MatchResultsPage: React.FC = () => {
 
           {/* Key Brief Parameters */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div className="p-2.5 rounded-xl bg-charcoal-950 border border-charcoal-850">
+            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
               <span className="text-[10px] text-slate-500 block">Content & Aspect Ratio</span>
-              <strong className="text-slate-200">
+              <strong className="text-slate-800">
                 {currentBrief.content_type.toUpperCase()} • {currentBrief.aspect_ratio}
               </strong>
             </div>
 
-            <div className="p-2.5 rounded-xl bg-charcoal-950 border border-charcoal-850">
+            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
               <span className="text-[10px] text-slate-500 block">Budget Ceiling</span>
-              <strong className="text-slate-200">
+              <strong className="text-slate-800 font-mono">
                 ${currentBrief.budget_max ? Number(currentBrief.budget_max).toLocaleString() : '3,500'} USD
               </strong>
             </div>
 
-            <div className="p-2.5 rounded-xl bg-charcoal-950 border border-charcoal-850">
+            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
               <span className="text-[10px] text-slate-500 block">Commercial Scope</span>
-              <strong className="text-slate-200 line-clamp-1">
+              <strong className="text-slate-800 line-clamp-1">
                 {currentBrief.commercial_use_scope}
               </strong>
             </div>
 
-            <div className="p-2.5 rounded-xl bg-charcoal-950 border border-charcoal-850">
+            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
               <span className="text-[10px] text-slate-500 block">Required Styles</span>
-              <strong className="text-electric-300 line-clamp-1">
+              <strong className="text-[#5B46F6] line-clamp-1">
                 {currentBrief.style_tags?.join(', ') || 'Cinematic'}
               </strong>
             </div>
@@ -203,16 +203,16 @@ export const MatchResultsPage: React.FC = () => {
 
       {/* Control bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="text-xs text-slate-400">
-          Showing <strong className="text-white font-semibold">{matches.length}</strong> evaluated creator candidates
+        <div className="text-xs text-slate-500">
+          Showing <strong className="text-slate-900 font-semibold">{matches.length}</strong> evaluated creator candidates
         </div>
 
-        <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+        <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer select-none">
           <input
             type="checkbox"
             checked={hideViolations}
             onChange={(e) => setHideViolations(e.target.checked)}
-            className="w-4 h-4 rounded border-charcoal-700 bg-charcoal-950 text-electric-600 focus:ring-electric-500 focus:ring-offset-charcoal-900"
+            className="w-4 h-4 rounded border-slate-300 bg-white text-[#5B46F6] focus:ring-[#5B46F6]"
           />
           <span>Hide candidates failing mandatory requirements (e.g. over budget or booked)</span>
         </label>
@@ -222,7 +222,7 @@ export const MatchResultsPage: React.FC = () => {
       {loading ? (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-64 rounded-2xl bg-charcoal-900 border border-charcoal-800 animate-pulse" />
+            <div key={i} className="h-64 rounded-2xl bg-white border border-slate-200 animate-pulse" />
           ))}
         </div>
       ) : matches.length > 0 ? (
@@ -239,11 +239,11 @@ export const MatchResultsPage: React.FC = () => {
           ))}
         </div>
       ) : (
-        <div className="p-12 text-center rounded-2xl bg-charcoal-900 border border-charcoal-800 space-y-3">
-          <h3 className="font-display font-bold text-white text-base">
+        <div className="p-12 text-center rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
+          <h3 className="font-display font-bold text-slate-900 text-base">
             No matching creators found for this brief configuration
           </h3>
-          <p className="text-xs text-slate-400 max-w-md mx-auto">
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
             Try adjusting your brief's budget parameters or removing strict mandatory constraints.
           </p>
         </div>
@@ -258,37 +258,37 @@ export const MatchResultsPage: React.FC = () => {
       >
         <div className="space-y-4 text-xs">
           <div>
-            <label className="text-slate-300 block mb-1 font-medium">Offered Budget ($ USD)</label>
+            <label className="text-slate-700 block mb-1 font-medium">Offered Budget ($ USD)</label>
             <input
               type="number"
               value={customTerms.budget}
               onChange={(e) => setCustomTerms({ ...customTerms, budget: Number(e.target.value) })}
-              className="w-full bg-charcoal-950 border border-charcoal-700 rounded-lg px-3 py-2 text-white"
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-[#5B46F6]"
             />
           </div>
 
           <div>
-            <label className="text-slate-300 block mb-1 font-medium">Target Delivery Date</label>
+            <label className="text-slate-700 block mb-1 font-medium">Target Delivery Date</label>
             <input
               type="date"
               value={customTerms.deadline}
               onChange={(e) => setCustomTerms({ ...customTerms, deadline: e.target.value })}
-              className="w-full bg-charcoal-950 border border-charcoal-700 rounded-lg px-3 py-2 text-white"
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-[#5B46F6]"
             />
           </div>
 
           <div>
-            <label className="text-slate-300 block mb-1 font-medium">Invitation Message & Project Notes</label>
+            <label className="text-slate-700 block mb-1 font-medium">Invitation Message & Project Notes</label>
             <textarea
               rows={3}
               value={customTerms.notes}
               onChange={(e) => setCustomTerms({ ...customTerms, notes: e.target.value })}
-              className="w-full bg-charcoal-950 border border-charcoal-700 rounded-lg p-3 text-white resize-none"
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-slate-900 resize-none focus:outline-none focus:border-[#5B46F6]"
             />
           </div>
 
-          <div className="p-3 rounded-xl bg-charcoal-950 border border-charcoal-800 text-[11px] text-slate-400 space-y-1">
-            <span className="font-semibold text-slate-300 block">Agreed Scope Inherited from Brief:</span>
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-1">
+            <span className="font-semibold text-slate-800 block">Agreed Scope Inherited from Brief:</span>
             <div>• Aspect Ratio: <strong>{currentBrief?.aspect_ratio}</strong></div>
             <div>• Commercial Rights: <strong>{currentBrief?.commercial_use_scope}</strong></div>
             <div>• Included Revisions: <strong>{currentBrief?.revision_limit || 2} rounds</strong></div>
@@ -297,14 +297,14 @@ export const MatchResultsPage: React.FC = () => {
           <div className="pt-2 flex items-center justify-end gap-2.5">
             <button
               onClick={() => setInviteModalOpen(false)}
-              className="px-4 py-2 rounded-xl bg-charcoal-800 hover:bg-charcoal-750 text-slate-300 font-semibold"
+              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold border border-slate-200"
             >
               Cancel
             </button>
             <button
               onClick={handleSendInvite}
               disabled={isInviting}
-              className="px-5 py-2 rounded-xl bg-electric-600 hover:bg-electric-500 text-white font-semibold shadow-glow-violet transition-all flex items-center gap-1.5 disabled:opacity-50"
+              className="px-5 py-2 rounded-xl bg-[#5B46F6] hover:bg-[#4F46E5] text-white font-semibold shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50"
             >
               {isInviting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
               <span>Send Invitation</span>

@@ -21,18 +21,18 @@ export const Footer: React.FC = () => {
           
           {/* Brand Info */}
           <div className="lg:col-span-2 space-y-4">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-[#6366F1] to-[#8B5CF6] flex items-center justify-center text-white">
-                <Sparkles className="w-3.5 h-3.5" />
+            <Link to="/" className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#5B46F6] to-[#7C3AED] flex items-center justify-center text-white shadow-glow-violet-sm">
+                <span className="font-display font-black text-sm">U</span>
               </div>
-              <span className="font-display font-bold text-slate-900 text-lg">
-                Cre8Match<span className="text-[#6366F1]">.AI</span>
+              <span className="font-display font-extrabold text-slate-900 text-xl tracking-tight">
+                UNFRAME
               </span>
             </Link>
 
             <p className="text-slate-500 text-xs leading-relaxed max-w-sm">
-              The AI creator marketplace.  
-              The right creative. The right proof. The right match.
+              The AI creator marketplace. <br />
+              Find the talent behind the vision.
             </p>
 
             {/* Social Icons */}
@@ -134,11 +134,11 @@ export const Footer: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#6366F1]"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#5B46F6]"
               />
               <button
                 type="submit"
-                className="p-2 rounded-lg bg-[#6366F1] hover:bg-[#4F46E5] text-white shrink-0 transition-colors"
+                className="p-2 rounded-lg bg-[#5B46F6] hover:bg-[#4F46E5] text-white shrink-0 transition-colors shadow-glow-violet-sm"
                 title="Subscribe"
               >
                 {subscribed ? <Check className="w-3.5 h-3.5 text-white" /> : <ArrowRight className="w-3.5 h-3.5" />}
@@ -154,7 +154,7 @@ export const Footer: React.FC = () => {
         {/* Bottom Bar */}
         <div className="mt-16 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-400">
           <div>
-            © 2026 Cre8Match AI. All rights reserved.
+            © 2026 UNFRAME. All rights reserved.
           </div>
           <div>
             Built for a more creative tomorrow.

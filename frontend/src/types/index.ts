@@ -77,9 +77,38 @@ export interface CreatorProfile {
   reviews?: Review[];
 }
 
+export interface Organization {
+  id: string;
+  owner_user_id?: string;
+  company_name: string;
+  type: 'brand' | 'agency';
+  industry?: string;
+  website?: string;
+  logo_url?: string;
+  description?: string;
+  verified: boolean;
+  created_at: string;
+  updated_at?: string;
+  open_briefs_count?: number;
+  open_briefs?: Brief[];
+}
+
+export interface BriefApplication {
+  id: string;
+  brief_id: string;
+  creator_id: string;
+  pitch: string;
+  proposed_rate?: number;
+  portfolio_sample_urls: string[];
+  status: 'pending' | 'reviewed' | 'accepted' | 'declined';
+  created_at: string;
+  creator?: CreatorProfile;
+}
+
 export interface Brief {
   id: string;
   brand_user_id?: string;
+  organization_id?: string;
   title: string;
   objective: string;
   raw_idea?: string;
@@ -96,9 +125,12 @@ export interface Brief {
   budget_min?: number;
   budget_max?: number;
   deadline?: string;
-  status: string;
+  status: 'draft' | 'open' | 'closed' | string;
+  visibility?: 'public' | 'private' | string;
   created_at: string;
   updated_at: string;
+  organization?: Organization;
+  applications_count?: number;
 }
 
 export interface StructuredDraftSuggestion {
@@ -209,4 +241,75 @@ export interface AssetUpload {
   uploader_role: string;
   created_at: string;
 }
+
+export interface User {
+  id: string;
+  role: 'brand' | 'creator' | 'admin';
+  display_name: string;
+  email: string;
+  avatar_url?: string;
+  is_active: boolean;
+  onboarding_completed: boolean;
+  created_at: string;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  token_type: string;
+  user: User;
+  creator_profile?: CreatorProfile;
+  organization?: Organization;
+}
+
+export interface UserRegisterPayload {
+  email: string;
+  password: string;
+  display_name: string;
+  role: 'creator' | 'brand';
+  avatar_url?: string;
+  // Creator onboarding
+  title?: string;
+  bio?: string;
+  location?: string;
+  specializations?: string[];
+  skills?: string[];
+  tools?: string[];
+  rate_min?: number;
+  rate_max?: number;
+  availability_status?: string;
+  initial_project?: any;
+  // Brand onboarding
+  company_name?: string;
+  type?: 'brand' | 'agency';
+  industry?: string;
+  website?: string;
+  logo_url?: string;
+  description?: string;
+  preferred_specializations?: string[];
+  budget_range?: string;
+}
+
+export interface UserLoginPayload {
+  email: string;
+  password: string;
+}
+
+export interface OnboardingUpdatePayload {
+  title?: string;
+  bio?: string;
+  location?: string;
+  specializations?: string[];
+  skills?: string[];
+  tools?: string[];
+  rate_min?: number;
+  rate_max?: number;
+  availability_status?: string;
+  company_name?: string;
+  type?: 'brand' | 'agency';
+  industry?: string;
+  website?: string;
+  logo_url?: string;
+  description?: string;
+}
+
 

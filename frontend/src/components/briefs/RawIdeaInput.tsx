@@ -36,19 +36,19 @@ export const RawIdeaInput: React.FC<RawIdeaInputProps> = ({ onSubmit, isLoading 
   };
 
   return (
-    <div className="rounded-2xl bg-gradient-to-b from-charcoal-850 to-charcoal-900 border border-charcoal-750 p-6 shadow-elevated space-y-5">
+    <div className="rounded-2xl bg-white border border-slate-200/90 p-6 shadow-sm space-y-5">
       
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="p-1 rounded-md bg-electric-950 text-electric-400 border border-electric-800">
+            <span className="p-1.5 rounded-lg bg-violet-50 text-[#5B46F6] border border-violet-200">
               <Wand2 className="w-4 h-4" />
             </span>
-            <h3 className="font-display font-bold text-white text-base">
+            <h3 className="font-display font-bold text-slate-900 text-base">
               Convert Rough Idea to Structured Creative Brief
             </h3>
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500">
             Enter an unpolished campaign thought. Creative Fit Intelligence extracts technical requirements, styles, and flags unconfirmed legal/commercial terms.
           </p>
         </div>
@@ -61,18 +61,18 @@ export const RawIdeaInput: React.FC<RawIdeaInputProps> = ({ onSubmit, isLoading 
             onChange={(e) => setIdea(e.target.value)}
             rows={4}
             placeholder="Describe your vision (e.g. 'We need a 30s cinematic commercial for our brand launch featuring futuristic cityscapes, moody lighting, and clean product hero shots')..."
-            className="w-full bg-charcoal-950 border border-charcoal-700 rounded-xl p-4 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-electric-500 focus:ring-1 focus:ring-electric-500 transition-all leading-relaxed resize-none"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#5B46F6] focus:ring-1 focus:ring-[#5B46F6] transition-all leading-relaxed resize-none"
           />
         </div>
 
         {/* Quick parameters */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="text-[11px] text-slate-400 block mb-1">Target Format / Aspect Ratio</label>
+            <label className="text-[11px] text-slate-500 font-medium block mb-1">Target Format / Aspect Ratio</label>
             <select
               value={format}
               onChange={(e) => setFormat(e.target.value)}
-              className="w-full bg-charcoal-950 border border-charcoal-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-electric-500"
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-[#5B46F6]"
             >
               <option value="16:9">16:9 (Landscape / YouTube / Preroll)</option>
               <option value="9:16">9:16 (Vertical / TikTok / Reels / Shorts)</option>
@@ -82,20 +82,20 @@ export const RawIdeaInput: React.FC<RawIdeaInputProps> = ({ onSubmit, isLoading 
           </div>
 
           <div>
-            <label className="text-[11px] text-slate-400 block mb-1">Target Audience (Optional)</label>
+            <label className="text-[11px] text-slate-500 font-medium block mb-1">Target Audience (Optional)</label>
             <input
               type="text"
               value={audience}
               onChange={(e) => setAudience(e.target.value)}
               placeholder="e.g. Tech enthusiasts, Luxury consumers (25-40)"
-              className="w-full bg-charcoal-950 border border-charcoal-700 rounded-lg px-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-electric-500"
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#5B46F6]"
             />
           </div>
         </div>
 
         {/* Quick Sample Prompts */}
         <div className="space-y-1.5">
-          <span className="text-[11px] text-slate-500 block">Try an example campaign idea:</span>
+          <span className="text-[11px] text-slate-400 block font-medium">Try an example campaign idea:</span>
           <div className="flex flex-wrap gap-2">
             {sampleIdeas.map((sample, idx) => (
               <button
@@ -105,9 +105,9 @@ export const RawIdeaInput: React.FC<RawIdeaInputProps> = ({ onSubmit, isLoading 
                   setIdea(sample.text);
                   setFormat(sample.format);
                 }}
-                className="text-[11px] px-2.5 py-1 rounded-lg bg-charcoal-800 hover:bg-charcoal-750 text-slate-300 hover:text-white border border-charcoal-700 transition-colors flex items-center gap-1"
+                className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors flex items-center gap-1.5"
               >
-                <Sparkles className="w-3 h-3 text-electric-400" />
+                <Sparkles className="w-3 h-3 text-[#5B46F6]" />
                 <span>{sample.title}</span>
               </button>
             ))}
@@ -117,7 +117,7 @@ export const RawIdeaInput: React.FC<RawIdeaInputProps> = ({ onSubmit, isLoading 
         <button
           type="submit"
           disabled={isLoading || !idea.trim()}
-          className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-electric-700 to-electric-600 hover:from-electric-600 hover:to-electric-500 text-white font-semibold text-xs shadow-glow-violet transition-all active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-3 px-4 rounded-xl bg-[#5B46F6] hover:bg-[#4F46E5] text-white font-semibold text-xs shadow-glow-violet transition-all active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <>

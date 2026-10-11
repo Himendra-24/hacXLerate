@@ -4,10 +4,11 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
 from app.core.database import get_db
-from app.models.models import CreatorProfile, PortfolioProject, VerificationRecord
+from app.core.auth import get_current_user, require_current_user, require_role
+from app.models.models import CreatorProfile, PortfolioProject, VerificationRecord, User
 from app.schemas.schemas import (
     CreatorProfileResponse, CreatorProfileCreate, CreatorProfileUpdate,
-    PortfolioProjectCreate, PortfolioProjectResponse, VerificationRecordResponse
+    PortfolioProjectCreate, PortfolioProjectUpdate, PortfolioProjectResponse, VerificationRecordResponse
 )
 
 router = APIRouter(prefix="/creators", tags=["Creators"])
@@ -104,8 +105,15 @@ def get_creator(creator_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("", response_model=CreatorProfileResponse)
-def create_creator(data: CreatorProfileCreate, db: Session = Depends(get_db)):
-    creator = CreatorProfile(**data.model_dump())
+def create_creator(
+    data: CreatorProfileCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["creator", "admin"]))
+):
+    c_data = data.model_dump()
+    if not c_data.get("user_id"):
+        c_data["user_id"] = current_user.id
+    creator = CreatorProfile(**c_data)
     db.add(creator)
     db.commit()
     db.refresh(creator)
@@ -113,10 +121,22 @@ def create_creator(data: CreatorProfileCreate, db: Session = Depends(get_db)):
 
 
 @router.patch("/{creator_id}", response_model=CreatorProfileResponse)
-def update_creator(creator_id: str, data: CreatorProfileUpdate, db: Session = Depends(get_db)):
+def update_creator(
+    creator_id: str,
+    data: CreatorProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["creator", "admin"]))
+):
     creator = db.query(CreatorProfile).filter(CreatorProfile.id == creator_id).first()
     if not creator:
         raise HTTPException(status_code=404, detail="Creator not found")
+
+    # Enforce ownership: only the creator themselves or admin can edit
+    if creator.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: You do not have permission to modify this creator profile."
+        )
 
     update_dict = data.model_dump(exclude_unset=True)
     for key, value in update_dict.items():
@@ -128,10 +148,22 @@ def update_creator(creator_id: str, data: CreatorProfileUpdate, db: Session = De
 
 
 @router.post("/{creator_id}/portfolio", response_model=PortfolioProjectResponse)
-def add_portfolio_project(creator_id: str, data: PortfolioProjectCreate, db: Session = Depends(get_db)):
+def add_portfolio_project(
+    creator_id: str,
+    data: PortfolioProjectCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["creator", "admin"]))
+):
     creator = db.query(CreatorProfile).filter(CreatorProfile.id == creator_id).first()
     if not creator:
         raise HTTPException(status_code=404, detail="Creator not found")
+
+    # Enforce ownership
+    if creator.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: You do not have permission to add portfolio projects to this creator profile."
+        )
 
     proj_dict = data.model_dump()
     proj_dict["creator_id"] = creator_id
@@ -155,9 +187,78 @@ def add_portfolio_project(creator_id: str, data: PortfolioProjectCreate, db: Ses
     return project
 
 
+@router.patch("/{creator_id}/portfolio/{project_id}", response_model=PortfolioProjectResponse)
+def update_portfolio_project(
+    creator_id: str,
+    project_id: str,
+    data: PortfolioProjectUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["creator", "admin"]))
+):
+    creator = db.query(CreatorProfile).filter(CreatorProfile.id == creator_id).first()
+    if not creator:
+        raise HTTPException(status_code=404, detail="Creator not found")
+
+    if creator.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: You do not have permission to modify this creator's portfolio."
+        )
+
+    project = db.query(PortfolioProject).filter(
+        PortfolioProject.id == project_id,
+        PortfolioProject.creator_id == creator_id
+    ).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Portfolio project not found")
+
+    update_dict = data.model_dump(exclude_unset=True)
+    for key, value in update_dict.items():
+        setattr(project, key, value)
+
+    db.commit()
+    db.refresh(project)
+    return project
+
+
+@router.delete("/{creator_id}/portfolio/{project_id}")
+def delete_portfolio_project(
+    creator_id: str,
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["creator", "admin"]))
+):
+    creator = db.query(CreatorProfile).filter(CreatorProfile.id == creator_id).first()
+    if not creator:
+        raise HTTPException(status_code=404, detail="Creator not found")
+
+    if creator.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: You do not have permission to delete projects from this creator profile."
+        )
+
+    project = db.query(PortfolioProject).filter(
+        PortfolioProject.id == project_id,
+        PortfolioProject.creator_id == creator_id
+    ).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Portfolio project not found")
+
+    # Clean up associated verification records
+    db.query(VerificationRecord).filter(
+        VerificationRecord.portfolio_project_id == project_id
+    ).delete(synchronize_session=False)
+
+    db.delete(project)
+    db.commit()
+    return {"status": "deleted", "project_id": project_id}
+
+
 @router.get("/{creator_id}/verification", response_model=List[VerificationRecordResponse])
 def get_creator_verifications(creator_id: str, db: Session = Depends(get_db)):
     creator = db.query(CreatorProfile).filter(CreatorProfile.id == creator_id).first()
     if not creator:
         raise HTTPException(status_code=404, detail="Creator not found")
     return creator.verification_records
+

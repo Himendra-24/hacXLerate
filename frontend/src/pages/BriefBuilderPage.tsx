@@ -75,14 +75,14 @@ export const BriefBuilderPage: React.FC = () => {
       
       {/* Header */}
       <div>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-charcoal-900 border border-charcoal-800 text-slate-300 text-xs mb-2">
-          <Wand2 className="w-3.5 h-3.5 text-electric-400" />
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-50 border border-violet-200 text-[#5B46F6] text-xs font-semibold mb-2">
+          <Wand2 className="w-3.5 h-3.5" />
           <span>AI-Assisted Creative Brief Builder</span>
         </div>
-        <h1 className="font-display font-extrabold text-3xl text-white">
+        <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-slate-900 tracking-tight">
           Structured Campaign Brief Builder
         </h1>
-        <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
+        <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
           Transform rough thoughts into verifiable creative briefs. Define aspect ratios, resolution targets, and commercial terms before matching against creator capabilities.
         </p>
       </div>
@@ -95,9 +95,9 @@ export const BriefBuilderPage: React.FC = () => {
 
           {/* Quick List of Existing Briefs */}
           {savedBriefs.length > 0 && (
-            <div className="p-5 rounded-2xl bg-charcoal-900 border border-charcoal-800 space-y-3">
-              <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5 text-electric-400" />
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
+              <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5 text-[#5B46F6]" />
                 Active Campaign Briefs ({savedBriefs.length})
               </span>
               <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
@@ -105,17 +105,17 @@ export const BriefBuilderPage: React.FC = () => {
                   <div
                     key={b.id}
                     onClick={() => navigate(`/matches?brief_id=${b.id}`)}
-                    className="p-3 rounded-xl bg-charcoal-950 border border-charcoal-800 hover:border-electric-700/60 hover:bg-charcoal-850 cursor-pointer transition-all flex items-center justify-between group"
+                    className="p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#5B46F6] hover:bg-violet-50/50 cursor-pointer transition-all flex items-center justify-between group"
                   >
                     <div className="min-w-0 flex-1">
-                      <h4 className="text-xs font-semibold text-white group-hover:text-electric-300 truncate">
+                      <h4 className="text-xs font-semibold text-slate-900 group-hover:text-[#5B46F6] truncate">
                         {b.title}
                       </h4>
-                      <p className="text-[10px] text-slate-400 mt-0.5">
+                      <p className="text-[10px] text-slate-500 mt-0.5">
                         {b.content_type.toUpperCase()} • {b.aspect_ratio} • Budget: ${b.budget_min || '1k'} - ${b.budget_max || '4k'}
                       </p>
                     </div>
-                    <ArrowRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-white shrink-0 ml-2" />
+                    <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#5B46F6] shrink-0 ml-2 transition-colors" />
                   </div>
                 ))}
               </div>

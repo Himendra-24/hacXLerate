@@ -5,21 +5,23 @@ import { api } from '../../services/api';
 import { Send, Paperclip, CheckCheck, Sparkles, Loader2, User } from 'lucide-react';
 
 interface DirectMessageModalProps {
-  isOpen: boolean;
+  isOpen?: boolean;
   onClose: () => void;
   creator: CreatorProfile | null;
   currentUserId?: string;
   currentUserName?: string;
   engagementId?: string;
+  onMessageSent?: () => void;
 }
 
 export const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
-  isOpen,
+  isOpen = true,
   onClose,
   creator,
-  currentUserId = 'brand_demo_user',
-  currentUserName = 'Acme Brand Creative Director',
+  currentUserId = '',
+  currentUserName = '',
   engagementId,
+  onMessageSent,
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
@@ -36,10 +38,10 @@ export const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
         const msgs = await api.getEngagementMessages(engagementId);
         setMessages(msgs);
       } else {
-        const msgs = await api.getConversation(creator.id, currentUserId);
+        const msgs = await api.getConversation(creator.id);
         setMessages(msgs);
       }
-      await api.markThreadRead(creator.id, currentUserId);
+      await api.markThreadRead(creator.id);
     } catch (err) {
       console.error(err);
     } finally {
@@ -85,6 +87,7 @@ export const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
       setMessages((prev) => [...prev, newMsg]);
       setInputText('');
       setAttachment(null);
+      onMessageSent?.();
     } catch (err) {
       console.error('Failed to send message:', err);
     } finally {
@@ -99,26 +102,26 @@ export const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose} title={`Direct Message — ${creator.display_name}`} maxWidth="xl">
       <div className="flex flex-col h-[520px]">
         {/* Creator Mini Header */}
-        <div className="p-3.5 bg-charcoal-900/90 rounded-xl border border-charcoal-800 flex items-center justify-between mb-4">
+        <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <img
               src={creator.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}
               alt={creator.display_name}
-              className="w-10 h-10 rounded-full object-cover ring-2 ring-electric-600/30"
+              className="w-10 h-10 rounded-full object-cover ring-2 ring-[#5B46F6]/15"
             />
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-display font-bold text-white text-sm">{creator.display_name}</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/70 text-emerald-400 border border-emerald-800/40 font-medium">
+                <span className="font-display font-bold text-slate-900 text-sm">{creator.display_name}</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
                   {creator.availability_status}
                 </span>
               </div>
-              <p className="text-xs text-slate-400">{creator.title}</p>
+              <p className="text-xs text-slate-500">{creator.title}</p>
             </div>
           </div>
           <div className="text-right text-xs">
             <span className="text-slate-500 block text-[10px] uppercase">Rate</span>
-            <span className="font-semibold text-slate-200">
+            <span className="font-semibold text-slate-900 font-mono">
               {creator.rate_min ? `$${creator.rate_min} – $${creator.rate_max || 4500}` : 'Custom'}
             </span>
           </div>
@@ -133,11 +136,11 @@ export const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
             </div>
           ) : messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500 space-y-2">
-              <div className="w-12 h-12 rounded-full bg-charcoal-800 flex items-center justify-center text-slate-400">
+              <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
                 <Sparkles className="w-5 h-5" />
               </div>
-              <p className="text-sm font-medium text-slate-300">Start the conversation with {creator.display_name}</p>
-              <p className="text-xs max-w-sm">
+              <p className="text-sm font-medium text-slate-900">Start the conversation with {creator.display_name}</p>
+              <p className="text-xs max-w-sm text-slate-500">
                 Discuss campaign vision, technical tool compatibility, deliverables, or turnaround time.
               </p>
             </div>
@@ -156,8 +159,8 @@ export const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
                   <div
                     className={`max-w-[80%] rounded-2xl p-3.5 text-xs leading-relaxed ${
                       isMe
-                        ? 'bg-electric-600 text-white rounded-br-none shadow-glow-violet'
-                        : 'bg-charcoal-800 text-slate-200 rounded-bl-none border border-charcoal-700/60'
+                        ? 'bg-[#5B46F6] text-white rounded-br-none shadow-sm'
+                        : 'bg-slate-100 text-slate-800 rounded-bl-none border border-slate-200'
                     }`}
                   >
                     <p className="whitespace-pre-wrap">{m.content}</p>
@@ -183,14 +186,14 @@ export const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
 
         {/* Selected Attachment Pill */}
         {attachment && (
-          <div className="flex items-center justify-between p-2 mb-2 bg-charcoal-800 rounded-lg text-xs text-slate-300">
+          <div className="flex items-center justify-between p-2 mb-2 bg-slate-100 border border-slate-200 rounded-lg text-xs text-slate-700">
             <span className="truncate flex items-center gap-1.5">
-              <Paperclip className="w-3.5 h-3.5 text-electric-400" />
+              <Paperclip className="w-3.5 h-3.5 text-[#5B46F6]" />
               <span>{attachment.name}</span>
             </span>
             <button
               onClick={() => setAttachment(null)}
-              className="text-slate-500 hover:text-rose-400 text-xs px-1.5"
+              className="text-slate-400 hover:text-rose-600 text-xs px-1.5"
             >
               ✕
             </button>
@@ -198,8 +201,8 @@ export const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
         )}
 
         {/* Input Bar */}
-        <form onSubmit={handleSendMessage} className="flex items-center gap-2 pt-2 border-t border-charcoal-800">
-          <label className="p-2.5 rounded-xl bg-charcoal-800 hover:bg-charcoal-700 text-slate-400 hover:text-white cursor-pointer transition-all">
+        <form onSubmit={handleSendMessage} className="flex items-center gap-2 pt-2 border-t border-slate-100">
+          <label className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 cursor-pointer transition-all border border-slate-200">
             <Paperclip className="w-4 h-4" />
             <input
               type="file"
@@ -214,12 +217,12 @@ export const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             placeholder={`Message ${creator.display_name}...`}
-            className="flex-1 bg-charcoal-900 border border-charcoal-800 focus:border-electric-500 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none"
+            className="flex-1 bg-slate-50 border border-slate-200 focus:border-[#5B46F6] rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none"
           />
           <button
             type="submit"
             disabled={(!inputText.trim() && !attachment) || sending}
-            className="px-4 py-2.5 rounded-xl bg-electric-600 hover:bg-electric-500 text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-all shadow-glow-violet"
+            className="px-4 py-2.5 rounded-xl bg-[#5B46F6] hover:bg-[#4F46E5] text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-all shadow-sm"
           >
             {sending || uploadingFile ? (
               <Loader2 className="w-4 h-4 animate-spin" />

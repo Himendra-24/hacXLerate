@@ -1,8 +1,66 @@
 import datetime
 from sqlalchemy.orm import Session
-from app.models.models import User, CreatorProfile, PortfolioProject, VerificationRecord, Brief, Engagement, Submission, Message, Review
+from app.core.security import hash_password
+from app.models.models import (
+    User, CreatorProfile, PortfolioProject, VerificationRecord, Brief,
+    Engagement, Submission, Message, Review, Brand, BriefApplication
+)
+
+def _seed_demo_users(db: Session):
+    # Ensure demo brand user exists
+    brand_user = db.query(User).filter(User.id == "brand_demo_user").first()
+    if not brand_user:
+        brand_user = db.query(User).filter(User.email == "brand@unframe.ai").first()
+    if not brand_user:
+        brand_user = User(
+            id="brand_demo_user",
+            email="brand@unframe.ai",
+            display_name="Acme Mobility Studio",
+            password_hash=hash_password("demopass123"),
+            role="brand",
+            avatar_url="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200",
+            onboarding_completed=True,
+            is_active=True
+        )
+        db.add(brand_user)
+    else:
+        if not brand_user.password_hash:
+            brand_user.password_hash = hash_password("demopass123")
+
+    # Ensure demo creator user exists
+    creator_user = db.query(User).filter(User.email == "creator@unframe.ai").first()
+    if not creator_user:
+        creator_user = User(
+            id="creator_demo_user",
+            email="creator@unframe.ai",
+            display_name="Elena Rostova",
+            password_hash=hash_password("demopass123"),
+            role="creator",
+            avatar_url="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+            onboarding_completed=True,
+            is_active=True
+        )
+        db.add(creator_user)
+        if not creator_user.password_hash:
+            creator_user.password_hash = hash_password("demopass123")
+
+    db.flush()
+
+    # Link Elena Rostova to creator_user if not linked
+    elena = db.query(CreatorProfile).filter(CreatorProfile.display_name == "Elena Rostova").first()
+    if elena and not elena.user_id:
+        elena.user_id = creator_user.id
+
+    # Link Acme Mobility to brand_user if not linked
+    acme = db.query(Brand).filter(Brand.company_name == "Acme Mobility Studio").first()
+    if acme and not acme.owner_user_id:
+        acme.owner_user_id = brand_user.id
+
+    db.commit()
 
 def seed_database(db: Session):
+    _seed_demo_users(db)
+    _seed_organizations_and_briefs(db)
     # Check if already seeded
     if db.query(CreatorProfile).count() > 0:
         _seed_reviews_and_engagements(db)
@@ -517,7 +575,9 @@ def seed_database(db: Session):
         budget_min=2000,
         budget_max=4500,
         deadline="2026-11-15",
-        status="published"
+        status="open",
+        visibility="public",
+        brand_user_id="brand_demo_user"
     )
 
     sample_brief_2 = Brief(
@@ -537,7 +597,9 @@ def seed_database(db: Session):
         budget_min=1000,
         budget_max=2500,
         deadline="2026-10-30",
-        status="published"
+        status="open",
+        visibility="public",
+        brand_user_id="brand_demo_user"
     )
 
     db.add(sample_brief_1)
@@ -738,5 +800,170 @@ def _seed_reviews_and_engagements(db: Session):
                 created_at=datetime.datetime.utcnow() - datetime.timedelta(hours=5)
             )
             db.add_all([m1, m2, m3, m4, m5])
+            db.commit()
+
+
+def _seed_organizations_and_briefs(db: Session):
+    # Ensure brand organizations exist
+    if db.query(Brand).count() == 0:
+        print("[SeedData] Seeding organization profiles (brands & agencies)...")
+        b1 = Brand(
+            id="brand_acme_mobility",
+            owner_user_id="brand_demo_user",
+            company_name="Acme Mobility Studio",
+            type="brand",
+            industry="Automotive & Clean Tech",
+            website="https://acmemobility.design",
+            logo_url="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80",
+            description="Pioneering high-performance electric mobility through cutting-edge generative video, virtual production, and real-time CGI reveals.",
+            verified=True
+        )
+        b2 = Brand(
+            id="agency_verve_collective",
+            owner_user_id="agency_demo_user",
+            company_name="Verve Creative Collective",
+            type="agency",
+            industry="Luxury Fashion & Lifestyle",
+            website="https://vervecreative.agency",
+            logo_url="https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=200&auto=format&fit=crop&q=80",
+            description="Global creative agency partnering with high-fashion ateliers and emerging luxury brands to produce viral diffusion-first digital campaigns.",
+            verified=True
+        )
+        b3 = Brand(
+            id="agency_hyperion_media",
+            owner_user_id="hyperion_lead",
+            company_name="Hyperion Media Works",
+            type="agency",
+            industry="Entertainment & Virtual Production",
+            website="https://hyperion.media",
+            logo_url="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=200&auto=format&fit=crop&q=80",
+            description="Boutique creative agency specializing in sci-fi cinematic teasers, generative game trailers, and dynamic commercial 3D VFX.",
+            verified=True
+        )
+        b4 = Brand(
+            id="brand_luxeglow",
+            owner_user_id="luxeglow_brand",
+            company_name="LuxeGlow Skincare",
+            type="brand",
+            industry="Beauty & Wellness",
+            website="https://luxeglow.bio",
+            logo_url="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=200&auto=format&fit=crop&q=80",
+            description="Organic clinical skincare scaling viral vertical-video performance ad campaigns on TikTok and Instagram Reels.",
+            verified=True
+        )
+        db.add_all([b1, b2, b3, b4])
+        db.commit()
+
+    # Link existing briefs to organizations if unassigned, and seed additional open/draft briefs
+    org_acme = db.query(Brand).filter(Brand.company_name == "Acme Mobility Studio").first()
+    org_verve = db.query(Brand).filter(Brand.company_name == "Verve Creative Collective").first()
+    org_hyperion = db.query(Brand).filter(Brand.company_name == "Hyperion Media Works").first()
+    org_luxeglow = db.query(Brand).filter(Brand.company_name == "LuxeGlow Skincare").first()
+
+    for brief in db.query(Brief).all():
+        if "Zenith" in brief.title or "EV" in brief.title:
+            if org_acme:
+                brief.organization_id = org_acme.id
+            brief.brand_user_id = "brand_demo_user"
+            brief.status = "open"
+            brief.visibility = "public"
+        elif "LuxeGlow" in brief.title or "Skincare" in brief.title:
+            if org_luxeglow:
+                brief.organization_id = org_luxeglow.id
+            brief.brand_user_id = "brand_demo_user"
+            brief.status = "open"
+            brief.visibility = "public"
+
+    # Seed 2 additional open briefs and 1 draft brief if total briefs <= 2
+    if db.query(Brief).count() <= 2:
+        if org_verve:
+            b3 = Brief(
+                organization_id=org_verve.id,
+                brand_user_id="agency_demo_user",
+                title="AeroSynth 2026: Spatial Audio & Holographic Spec Ad",
+                objective="Create an ethereal, surreal CGI commercial video showcasing next-gen spatial headphones floating in zero gravity with soundwave simulations.",
+                raw_idea="Futuristic headphones with pulsating neon cymatics and water droplet physics in a minimal white studio.",
+                description="Hyper-detailed 16:9 CGI campaign video demonstrating tactile material shaders, brushed aluminum geometry, and generative iridescent fluid patterns.",
+                content_type="cgi",
+                style_tags=["cgi", "photorealistic", "surreal", "spatial audio"],
+                aspect_ratio="16:9",
+                duration="20s",
+                resolution="4K",
+                commercial_use_scope="Full Commercial (Digital & Broadcast)",
+                license_duration_months=12,
+                exclusivity_required=True,
+                revision_limit=2,
+                budget_min=2500,
+                budget_max=5000,
+                deadline="2026-11-20",
+                status="open",
+                visibility="public"
+            )
+            db.add(b3)
+
+        if org_hyperion:
+            b4 = Brief(
+                organization_id=org_hyperion.id,
+                brand_user_id="hyperion_lead",
+                title="CyberKicks Urban Drift: Kinetic Streetwear Video",
+                objective="Deliver a punchy, 9:16 vertical video ad showing futuristic sneakers splashing through puddles in Tokyo at night.",
+                raw_idea="Cyberpunk Tokyo streetwear vertical ad with speed ramps and neon lighting.",
+                description="High-energy 9:16 commercial video with aggressive cuts, camera motion blur, and cinematic neon grading for TikTok and Reels.",
+                content_type="video",
+                style_tags=["vertical framing (9:16)", "cinematic", "neon", "cyberpunk"],
+                aspect_ratio="9:16",
+                duration="15s",
+                resolution="1080p",
+                commercial_use_scope="Digital Social Advertising Only",
+                license_duration_months=6,
+                exclusivity_required=False,
+                revision_limit=2,
+                budget_min=1200,
+                budget_max=2800,
+                deadline="2026-11-05",
+                status="open",
+                visibility="public"
+            )
+            db.add(b4)
+
+        if org_acme:
+            # Confidential draft brief
+            b5 = Brief(
+                organization_id=org_acme.id,
+                brand_user_id="brand_demo_user",
+                title="Project Chronos: Stealth Luxury Timepiece (Internal Concept)",
+                objective="Internal exploratory concept for luxury watch launch.",
+                raw_idea="Exploded watch dial with sapphire crystal reflection.",
+                description="Confidential unreleased brand draft brief.",
+                content_type="cgi",
+                style_tags=["luxury", "speculative"],
+                aspect_ratio="16:9",
+                duration="15s",
+                resolution="4K",
+                budget_min=3000,
+                budget_max=6000,
+                status="draft",
+                visibility="private"
+            )
+            db.add(b5)
+
+    db.commit()
+
+    # Seed sample brief application if none exist
+    if db.query(BriefApplication).count() == 0:
+        zenith_brief = db.query(Brief).filter(Brief.title.ilike("%Zenith%")).first()
+        elena = db.query(CreatorProfile).filter(CreatorProfile.display_name == "Elena Rostova").first()
+        if zenith_brief and elena:
+            app1 = BriefApplication(
+                brief_id=zenith_brief.id,
+                creator_id=elena.id,
+                pitch="I have already built automotive diffusion workflows with ACES color consistency and custom motion brush camera angles. I can deliver 4K masters within 7 days.",
+                proposed_rate=3200,
+                portfolio_sample_urls=[
+                    "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1200&q=80"
+                ],
+                status="pending"
+            )
+            db.add(app1)
             db.commit()
 

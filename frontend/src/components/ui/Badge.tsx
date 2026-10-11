@@ -16,29 +16,29 @@ export const Badge: React.FC<BadgeProps> = ({
 }) => {
   const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-[11px]' : 'px-2.5 py-1 text-xs';
 
-  let variantStyles = 'bg-charcoal-800 text-slate-300 border-charcoal-700';
+  let variantStyles = 'bg-slate-100 text-slate-700 border-slate-200';
 
   switch (variant) {
     case 'verified':
-      variantStyles = 'bg-emerald-950/60 text-emerald-300 border-emerald-800/60';
+      variantStyles = 'bg-emerald-50 text-emerald-700 border-emerald-200/90';
       break;
     case 'demo':
-      variantStyles = 'bg-amber-950/50 text-amber-300 border-amber-800/50';
+      variantStyles = 'bg-amber-50 text-amber-700 border-amber-200/90';
       break;
     case 'self-reported':
-      variantStyles = 'bg-slate-800/80 text-slate-400 border-slate-700';
+      variantStyles = 'bg-slate-100 text-slate-600 border-slate-200';
       break;
     case 'pending':
-      variantStyles = 'bg-sky-950/60 text-sky-300 border-sky-800/60';
+      variantStyles = 'bg-sky-50 text-sky-700 border-sky-200/90';
       break;
     case 'warning':
-      variantStyles = 'bg-rose-950/60 text-rose-300 border-rose-800/60';
+      variantStyles = 'bg-rose-50 text-rose-700 border-rose-200/90';
       break;
     case 'success':
-      variantStyles = 'bg-teal-950/60 text-teal-300 border-teal-800/60';
+      variantStyles = 'bg-teal-50 text-teal-700 border-teal-200/90';
       break;
     case 'purple':
-      variantStyles = 'bg-electric-950/80 text-electric-300 border-electric-700/60';
+      variantStyles = 'bg-violet-50 text-[#5B46F6] border-violet-200/90';
       break;
   }
 

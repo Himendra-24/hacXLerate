@@ -10,10 +10,59 @@ import {
   Review,
   Message,
   MessageThreadSummary,
-  AssetUpload
+  AssetUpload,
+  Organization,
+  BriefApplication,
+  User,
+  AuthResponse,
+  UserRegisterPayload,
+  UserLoginPayload,
+  OnboardingUpdatePayload
 } from '../types';
 
 const API_BASE = '/api/v1';
+
+export function getAuthToken(): string | null {
+  return localStorage.getItem('unframe_token');
+}
+
+export function setAuthSession(auth: AuthResponse): void {
+  localStorage.setItem('unframe_token', auth.access_token);
+  localStorage.setItem('unframe_user', JSON.stringify(auth.user));
+  if (auth.creator_profile) {
+    localStorage.setItem('unframe_creator_profile', JSON.stringify(auth.creator_profile));
+  }
+  if (auth.organization) {
+    localStorage.setItem('unframe_organization', JSON.stringify(auth.organization));
+  }
+}
+
+export function clearAuthSession(): void {
+  localStorage.removeItem('unframe_token');
+  localStorage.removeItem('unframe_user');
+  localStorage.removeItem('unframe_creator_profile');
+  localStorage.removeItem('unframe_organization');
+}
+
+export function getAuthHeaders(custom: Record<string, string> = {}): Record<string, string> {
+  const headers: Record<string, string> = { ...custom };
+  const token = getAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  const userStr = localStorage.getItem('unframe_user');
+  if (userStr) {
+    try {
+      const u = JSON.parse(userStr);
+      if (u?.id) {
+        headers['x-user-id'] = u.id;
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return headers;
+}
 
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -30,6 +79,41 @@ async function handleResponse<T>(res: Response): Promise<T> {
 }
 
 export const api = {
+  // Authentication & Onboarding
+  async register(data: UserRegisterPayload): Promise<AuthResponse> {
+    const res = await fetch(`${API_BASE}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return handleResponse<AuthResponse>(res);
+  },
+
+  async login(data: UserLoginPayload): Promise<AuthResponse> {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return handleResponse<AuthResponse>(res);
+  },
+
+  async getMe(): Promise<AuthResponse> {
+    const res = await fetch(`${API_BASE}/auth/me`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<AuthResponse>(res);
+  },
+
+  async updateOnboarding(data: OnboardingUpdatePayload): Promise<AuthResponse> {
+    const res = await fetch(`${API_BASE}/auth/onboarding`, {
+      method: 'POST',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(data),
+    });
+    return handleResponse<AuthResponse>(res);
+  },
+
   // Creators
   async getCreators(params?: Record<string, string>): Promise<CreatorProfile[]> {
     const url = new URL(`${window.location.origin}${API_BASE}/creators`);
@@ -47,10 +131,19 @@ export const api = {
     return handleResponse<CreatorProfile>(res);
   },
 
+  async createCreator(data: Partial<CreatorProfile>): Promise<CreatorProfile> {
+    const res = await fetch(`${API_BASE}/creators`, {
+      method: 'POST',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(data),
+    });
+    return handleResponse<CreatorProfile>(res);
+  },
+
   async updateCreator(id: string, data: Partial<CreatorProfile>): Promise<CreatorProfile> {
     const res = await fetch(`${API_BASE}/creators/${id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(data),
     });
     return handleResponse<CreatorProfile>(res);
@@ -59,17 +152,34 @@ export const api = {
   async addPortfolioProject(creatorId: string, project: Partial<PortfolioProject>): Promise<PortfolioProject> {
     const res = await fetch(`${API_BASE}/creators/${creatorId}/portfolio`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(project),
     });
     return handleResponse<PortfolioProject>(res);
+  },
+
+  async updatePortfolioProject(creatorId: string, projectId: string, data: Partial<PortfolioProject>): Promise<PortfolioProject> {
+    const res = await fetch(`${API_BASE}/creators/${creatorId}/portfolio/${projectId}`, {
+      method: 'PATCH',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(data),
+    });
+    return handleResponse<PortfolioProject>(res);
+  },
+
+  async deletePortfolioProject(creatorId: string, projectId: string): Promise<{ status: string; project_id: string }> {
+    const res = await fetch(`${API_BASE}/creators/${creatorId}/portfolio/${projectId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<{ status: string; project_id: string }>(res);
   },
 
   // Briefs & AI Builder
   async structureRawIdea(rawIdea: string, targetAudience?: string, preferredFormat?: string): Promise<StructuredDraftSuggestion> {
     const res = await fetch(`${API_BASE}/briefs/structure`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         raw_idea: rawIdea,
         target_audience: targetAudience,
@@ -80,31 +190,121 @@ export const api = {
   },
 
   async getBriefs(): Promise<Brief[]> {
-    const res = await fetch(`${API_BASE}/briefs`);
+    const res = await fetch(`${API_BASE}/briefs`, {
+      headers: getAuthHeaders(),
+    });
     return handleResponse<Brief[]>(res);
   },
 
   async getBrief(id: string): Promise<Brief> {
-    const res = await fetch(`${API_BASE}/briefs/${id}`);
+    const res = await fetch(`${API_BASE}/briefs/${id}`, {
+      headers: getAuthHeaders(),
+    });
     return handleResponse<Brief>(res);
   },
 
   async createBrief(brief: Partial<Brief>): Promise<Brief> {
     const res = await fetch(`${API_BASE}/briefs`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(brief),
     });
     return handleResponse<Brief>(res);
   },
 
-  async updateBrief(id: string, brief: Partial<Brief>): Promise<Brief> {
-    const res = await fetch(`${API_BASE}/briefs/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(brief),
+  async getOpenBriefs(params?: {
+    category?: string;
+    aspect_ratio?: string;
+    budget_min?: number;
+    budget_max?: number;
+    search?: string;
+  }): Promise<Brief[]> {
+    const url = new URL(`${window.location.origin}${API_BASE}/briefs/open`);
+    if (params) {
+      if (params.category && params.category !== 'all') url.searchParams.append('category', params.category);
+      if (params.aspect_ratio && params.aspect_ratio !== 'all') url.searchParams.append('aspect_ratio', params.aspect_ratio);
+      if (params.budget_min !== undefined) url.searchParams.append('budget_min', params.budget_min.toString());
+      if (params.budget_max !== undefined) url.searchParams.append('budget_max', params.budget_max.toString());
+      if (params.search) url.searchParams.append('search', params.search);
+    }
+    const res = await fetch(url.toString());
+    return handleResponse<Brief[]>(res);
+  },
+
+  async applyToBrief(
+    briefId: string,
+    data: { creator_id?: string; pitch: string; proposed_rate?: number; portfolio_sample_urls?: string[] }
+  ): Promise<BriefApplication> {
+    const res = await fetch(`${API_BASE}/briefs/${briefId}/apply`, {
+      method: 'POST',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(data),
     });
-    return handleResponse<Brief>(res);
+    return handleResponse<BriefApplication>(res);
+  },
+
+  async getBriefApplications(briefId: string): Promise<BriefApplication[]> {
+    const res = await fetch(`${API_BASE}/briefs/${briefId}/applications`);
+    return handleResponse<BriefApplication[]>(res);
+  },
+
+  async getMyBriefApplications(): Promise<BriefApplication[]> {
+    const res = await fetch(`${API_BASE}/briefs/my-applications/all`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<BriefApplication[]>(res);
+  },
+
+  async updateApplicationStatus(applicationId: string, status: string): Promise<BriefApplication> {
+    const res = await fetch(`${API_BASE}/briefs/applications/${applicationId}`, {
+      method: 'PATCH',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ status }),
+    });
+    return handleResponse<BriefApplication>(res);
+  },
+
+  async updateBriefApplicationStatus(applicationId: string, status: string): Promise<BriefApplication> {
+    return this.updateApplicationStatus(applicationId, status);
+  },
+
+  // Organizations
+  async getOrganizations(params?: { type?: string; search?: string }): Promise<Organization[]> {
+    const url = new URL(`${window.location.origin}${API_BASE}/organizations`);
+    if (params) {
+      if (params.type && params.type !== 'all') url.searchParams.append('type', params.type);
+      if (params.search) url.searchParams.append('search', params.search);
+    }
+    const res = await fetch(url.toString());
+    return handleResponse<Organization[]>(res);
+  },
+
+  async getOrganization(id: string): Promise<Organization> {
+    const res = await fetch(`${API_BASE}/organizations/${id}`);
+    return handleResponse<Organization>(res);
+  },
+
+  async createOrganization(org: Partial<Organization>): Promise<Organization> {
+    const res = await fetch(`${API_BASE}/organizations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(org),
+    });
+    return handleResponse<Organization>(res);
+  },
+
+  async updateOrganization(id: string, org: Partial<Organization>, currentUserId?: string): Promise<Organization> {
+    const url = new URL(`${window.location.origin}${API_BASE}/organizations/${id}`);
+    if (currentUserId) url.searchParams.append('current_user_id', currentUserId);
+    const res = await fetch(url.toString(), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(currentUserId ? { 'X-User-Id': currentUserId } : {})
+      },
+      body: JSON.stringify(org),
+    });
+    return handleResponse<Organization>(res);
   },
 
   // Creative Fit Intelligence Matching
@@ -127,14 +327,14 @@ export const api = {
   // Shortlist
   async getShortlist(briefId?: string): Promise<ShortlistItem[]> {
     const url = briefId ? `${API_BASE}/shortlist?brief_id=${briefId}` : `${API_BASE}/shortlist`;
-    const res = await fetch(url);
+    const res = await fetch(url, { headers: getAuthHeaders() });
     return handleResponse<ShortlistItem[]>(res);
   },
 
   async addToShortlist(creatorId: string, briefId?: string, notes?: string): Promise<ShortlistItem> {
     const res = await fetch(`${API_BASE}/shortlist`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ creator_id: creatorId, brief_id: briefId, notes }),
     });
     return handleResponse<ShortlistItem>(res);
@@ -143,6 +343,7 @@ export const api = {
   async removeFromShortlist(shortlistId: string): Promise<void> {
     const res = await fetch(`${API_BASE}/shortlist/${shortlistId}`, {
       method: 'DELETE',
+      headers: getAuthHeaders(),
     });
     await handleResponse(res);
   },
@@ -151,7 +352,7 @@ export const api = {
     const url = briefId
       ? `${API_BASE}/shortlist/creator/${creatorId}?brief_id=${briefId}`
       : `${API_BASE}/shortlist/creator/${creatorId}`;
-    const res = await fetch(url, { method: 'DELETE' });
+    const res = await fetch(url, { method: 'DELETE', headers: getAuthHeaders() });
     await handleResponse(res);
   },
 
@@ -203,18 +404,24 @@ export const api = {
   },
 
   // Messaging & Live Chat
-  async getMessageThreads(currentUserId: string = 'brand_demo_user'): Promise<MessageThreadSummary[]> {
-    const res = await fetch(`${API_BASE}/messages/threads?current_user_id=${currentUserId}`);
+  async getMessageThreads(): Promise<MessageThreadSummary[]> {
+    const res = await fetch(`${API_BASE}/messages/threads`, {
+      headers: getAuthHeaders(),
+    });
     return handleResponse<MessageThreadSummary[]>(res);
   },
 
-  async getConversation(partnerId: string, currentUserId: string = 'brand_demo_user'): Promise<Message[]> {
-    const res = await fetch(`${API_BASE}/messages/conversation/${partnerId}?current_user_id=${currentUserId}`);
+  async getConversation(partnerId: string): Promise<Message[]> {
+    const res = await fetch(`${API_BASE}/messages/conversation/${partnerId}`, {
+      headers: getAuthHeaders(),
+    });
     return handleResponse<Message[]>(res);
   },
 
   async getEngagementMessages(engagementId: string): Promise<Message[]> {
-    const res = await fetch(`${API_BASE}/messages/engagement/${engagementId}`);
+    const res = await fetch(`${API_BASE}/messages/engagement/${engagementId}`, {
+      headers: getAuthHeaders(),
+    });
     return handleResponse<Message[]>(res);
   },
 
@@ -231,15 +438,16 @@ export const api = {
   }): Promise<Message> {
     const res = await fetch(`${API_BASE}/messages`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(msg),
     });
     return handleResponse<Message>(res);
   },
 
-  async markThreadRead(partnerId: string, currentUserId: string = 'brand_demo_user'): Promise<void> {
-    await fetch(`${API_BASE}/messages/mark-thread-read/${partnerId}?current_user_id=${currentUserId}`, {
-      method: 'POST'
+  async markThreadRead(partnerId: string): Promise<void> {
+    await fetch(`${API_BASE}/messages/mark-thread-read/${partnerId}`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
     });
   },
 
@@ -284,11 +492,25 @@ export const api = {
     if (relatedEntityType) formData.append('related_entity_type', relatedEntityType);
     if (relatedEntityId) formData.append('related_entity_id', relatedEntityId);
 
+    const headers = getAuthHeaders();
+    delete headers['Content-Type'];
+
     const res = await fetch(`${API_BASE}/uploads`, {
       method: 'POST',
+      headers,
       body: formData,
     });
     return handleResponse<AssetUpload>(res);
+  },
+
+  async uploadAsset(
+    file: File,
+    uploaderRole: string = 'creator',
+    fileType: string = 'video',
+    relatedEntityType?: string,
+    relatedEntityId?: string
+  ): Promise<AssetUpload> {
+    return this.uploadFile(file, uploaderRole, fileType, relatedEntityType, relatedEntityId);
   },
 };
 

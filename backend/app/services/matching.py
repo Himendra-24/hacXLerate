@@ -3,25 +3,30 @@ from app.models.models import CreatorProfile, PortfolioProject, Brief
 from app.schemas.schemas import CreatorMatchResult, MatchScoreBreakdown, CreatorProfileResponse, PortfolioProjectResponse
 
 def calculate_overlap_ratio(required_items: List[str], documented_items: List[str]) -> float:
-    if not required_items:
-        return 1.0  # If no specific requirement, neutral full pass
+    """
+    Computes ratio of required items matched by documented items.
+    If required_items is empty, returns 0.5 (neutral unconfirmed baseline).
+    If documented_items is empty, returns 0.0 (missing evidence penalized).
+    """
     if not documented_items:
         return 0.0
+    if not required_items:
+        return 0.5  # Neutral baseline when requirements are underspecified
 
     req_set = {item.strip().lower() for item in required_items if item.strip()}
     doc_set = {item.strip().lower() for item in documented_items if item.strip()}
 
     if not req_set:
-        return 1.0
+        return 0.5
 
     intersection = req_set.intersection(doc_set)
-    # Check partial substring matches as well (e.g. "Runway" matches "Runway Gen-3")
+    # Check partial substring matches (e.g. "Runway" matches "Runway Gen-3")
     for req in req_set:
         if req not in intersection:
             if any(req in doc or doc in req for doc in doc_set):
                 intersection.add(req)
 
-    return len(intersection) / len(req_set)
+    return min(1.0, max(0.0, len(intersection) / len(req_set)))
 
 def evaluate_creator_fit(
     creator: CreatorProfile,
@@ -30,89 +35,111 @@ def evaluate_creator_fit(
 ) -> CreatorMatchResult:
     """
     Computes deterministic Creative Fit Intelligence matching score and explains exact evidence.
-    Score formula:
-    score = 0.40 * skill_match + 0.30 * portfolio_relevance + 0.20 * format_compatibility + 0.10 * tool_compatibility
+
+    Formula:
+      score = 0.40 * skill_match + 0.30 * portfolio_relevance + 0.20 * format_compatibility + 0.10 * tool_compatibility
+
+    Components (each strictly 0.0 - 100.0):
+      1. skill_match (0.40): Overlap of brief style tags + content type with creator's demonstrated skills.
+      2. portfolio_relevance (0.30): Metadata evidence from portfolio projects matching content type, specialization, and format.
+      3. format_compatibility (0.20): Demonstrated capability delivering the brief's aspect ratio and content type.
+      4. tool_compatibility (0.10): Overlap of required AI generative tools (or modern tool stack depth) with creator tools.
+
+    Mandatory Constraints are evaluated independently from the weighted score:
+      - Budget cap: creator.rate_min <= brief.budget_max
+      - Commercial rights: verified commercial licensing on portfolio projects
+      - Creator availability: creator not marked as "Booked"
     """
     if required_tools is None:
         required_tools = []
 
-    # 1. Skill Match (0 - 100)
-    # Combine brief style tags + content type as required creative competencies
+    # 1. Skill Match (0.0 - 100.0)
     brief_skills_needed = [tag.lower() for tag in (brief.style_tags or [])]
     if brief.content_type:
         brief_skills_needed.append(brief.content_type.lower())
 
     creator_skills = [s.lower() for s in (creator.skills or [])]
-    skill_ratio = calculate_overlap_ratio(brief_skills_needed, creator_skills)
-    skill_score = min(100.0, max(0.0, skill_ratio * 100.0))
+    if not creator_skills:
+        skill_score = 0.0
+    else:
+        skill_ratio = calculate_overlap_ratio(brief_skills_needed, creator_skills)
+        skill_score = min(100.0, max(0.0, skill_ratio * 100.0))
 
-    # 2. Portfolio Relevance (0 - 100)
-    # Check if creator has projects matching brief content_type, specialization, or style tags
+    # 2. Portfolio Relevance (0.0 - 100.0)
+    # Evaluated from metadata of actual portfolio projects; 0.0 if creator has no portfolio projects
     matching_projects: List[PortfolioProject] = []
     total_relevance_points = 0.0
 
-    brief_text = f"{brief.title} {brief.objective} {brief.description}".lower()
-    brief_styles = {t.lower() for t in (brief.style_tags or [])}
+    if not creator.portfolio_projects or len(creator.portfolio_projects) == 0:
+        portfolio_relevance_score = 0.0
+    else:
+        brief_styles = {t.lower() for t in (brief.style_tags or [])}
+        for proj in creator.portfolio_projects:
+            proj_score = 0.0
+            # Content type match (up to 40 pts)
+            if proj.content_type and brief.content_type and proj.content_type.lower() == brief.content_type.lower():
+                proj_score += 40.0
+            elif proj.specialization and brief.content_type and brief.content_type.lower() in proj.specialization.lower():
+                proj_score += 25.0
 
-    for proj in creator.portfolio_projects:
-        proj_score = 0
-        # Check content type match
-        if proj.content_type.lower() == brief.content_type.lower():
-            proj_score += 40
-        elif brief.content_type.lower() in proj.specialization.lower():
-            proj_score += 30
+            # Aspect ratio match (up to 30 pts)
+            proj_ratios = [r.strip() for r in (proj.aspect_ratios or [])]
+            if brief.aspect_ratio and brief.aspect_ratio in proj_ratios:
+                proj_score += 30.0
 
-        # Check aspect ratio match
-        proj_ratios = [r.strip() for r in (proj.aspect_ratios or [])]
-        if brief.aspect_ratio in proj_ratios:
-            proj_score += 30
+            # Demonstrated skills overlap (up to 30 pts)
+            proj_skills = {s.lower() for s in (proj.skills_demonstrated or [])}
+            overlap = proj_skills.intersection(brief_styles)
+            if overlap:
+                proj_score += min(30.0, len(overlap) * 15.0)
 
-        # Check skill/tool relevance
-        proj_skills = {s.lower() for s in (proj.skills_demonstrated or [])}
-        overlap = proj_skills.intersection(brief_styles)
-        if overlap:
-            proj_score += min(30, len(overlap) * 15)
+            if proj_score >= 25.0:
+                matching_projects.append(proj)
+                total_relevance_points = max(total_relevance_points, proj_score)
 
-        if proj_score >= 30:
-            matching_projects.append(proj)
-            total_relevance_points = max(total_relevance_points, float(proj_score))
+        portfolio_relevance_score = min(100.0, max(0.0, total_relevance_points))
 
-    portfolio_relevance_score = min(100.0, total_relevance_points)
-
-    # 3. Format Compatibility (0 - 100)
-    # Check aspect ratio + content type presence across all creator projects
+    # 3. Format Compatibility (0.0 - 100.0)
     has_aspect_ratio = any(
         brief.aspect_ratio in (p.aspect_ratios or [])
-        for p in creator.portfolio_projects
-    )
+        for p in (creator.portfolio_projects or [])
+    ) if (brief.aspect_ratio and creator.portfolio_projects) else False
+
     has_content_type = any(
-        p.content_type.lower() == brief.content_type.lower()
-        for p in creator.portfolio_projects
-    )
+        (p.content_type or "").lower() == (brief.content_type or "").lower()
+        for p in (creator.portfolio_projects or [])
+    ) if (brief.content_type and creator.portfolio_projects) else False
 
-    format_score = 0.0
-    if has_aspect_ratio and has_content_type:
+    if not creator.portfolio_projects or len(creator.portfolio_projects) == 0:
+        format_score = 0.0
+    elif has_aspect_ratio and has_content_type:
         format_score = 100.0
-    elif has_aspect_ratio or has_content_type:
-        format_score = 60.0
+    elif has_aspect_ratio:
+        format_score = 65.0
+    elif has_content_type:
+        format_score = 50.0
     else:
-        format_score = 25.0
+        format_score = 15.0
 
-    # 4. Tool Compatibility (0 - 100)
+    # 4. Tool Compatibility (0.0 - 100.0)
     creator_tools = [t.lower() for t in (creator.tools or [])]
-    if required_tools:
+    if not creator_tools:
+        tool_score = 0.0
+    elif required_tools:
         tool_ratio = calculate_overlap_ratio(required_tools, creator_tools)
-        tool_score = tool_ratio * 100.0
+        tool_score = min(100.0, max(0.0, tool_ratio * 100.0))
     else:
-        # If no specific tools required, assess based on tool count and modern AI stack presence
-        tool_score = min(100.0, len(creator_tools) * 15.0)
+        # Standard AI generative stack coverage (Runway, Midjourney, Topaz, ComfyUI, etc.)
+        tool_score = min(100.0, max(10.0, len(creator_tools) * 20.0))
 
-    # Composite Score
+    # Composite Score calculation
     composite_score = round(
-        (0.40 * skill_score) +
-        (0.30 * portfolio_relevance_score) +
-        (0.20 * format_score) +
-        (0.10 * tool_score),
+        min(100.0, max(0.0,
+            (0.40 * skill_score) +
+            (0.30 * portfolio_relevance_score) +
+            (0.20 * format_score) +
+            (0.10 * tool_score)
+        )),
         1
     )
 
