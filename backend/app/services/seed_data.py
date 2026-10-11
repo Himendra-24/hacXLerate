@@ -8,15 +8,15 @@ from app.models.models import (
 
 def _seed_demo_users(db: Session):
     # Ensure demo brand user exists
-    brand_user = db.query(User).filter(User.id == "brand_demo_user").first()
+    brand_user = db.query(User).filter(User.email == "brand@unframe.ai").first()
     if not brand_user:
-        brand_user = db.query(User).filter(User.email == "brand@unframe.ai").first()
+        brand_user = db.query(User).filter(User.id == "brand_demo_user").first()
     if not brand_user:
         brand_user = User(
             id="brand_demo_user",
             email="brand@unframe.ai",
             display_name="Acme Mobility Studio",
-            password_hash=hash_password("demopass123"),
+            password_hash=hash_password("Password123!"),
             role="brand",
             avatar_url="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200",
             onboarding_completed=True,
@@ -24,25 +24,43 @@ def _seed_demo_users(db: Session):
         )
         db.add(brand_user)
     else:
-        if not brand_user.password_hash:
-            brand_user.password_hash = hash_password("demopass123")
+        brand_user.password_hash = hash_password("Password123!")
 
     # Ensure demo creator user exists
     creator_user = db.query(User).filter(User.email == "creator@unframe.ai").first()
+    if not creator_user:
+        creator_user = db.query(User).filter(User.id == "creator_demo_user").first()
     if not creator_user:
         creator_user = User(
             id="creator_demo_user",
             email="creator@unframe.ai",
             display_name="Elena Rostova",
-            password_hash=hash_password("demopass123"),
+            password_hash=hash_password("Password123!"),
             role="creator",
             avatar_url="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
             onboarding_completed=True,
             is_active=True
         )
         db.add(creator_user)
-        if not creator_user.password_hash:
-            creator_user.password_hash = hash_password("demopass123")
+    else:
+        creator_user.password_hash = hash_password("Password123!")
+
+    # Ensure demo admin user exists
+    admin_user = db.query(User).filter(User.email == "admin@unframe.ai").first()
+    if not admin_user:
+        admin_user = User(
+            id="admin_demo_user",
+            email="admin@unframe.ai",
+            display_name="UNFRAME Platform Admin",
+            password_hash=hash_password("Password123!"),
+            role="admin",
+            avatar_url="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200",
+            onboarding_completed=True,
+            is_active=True
+        )
+        db.add(admin_user)
+    else:
+        admin_user.password_hash = hash_password("Password123!")
 
     db.flush()
 
