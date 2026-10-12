@@ -20,7 +20,26 @@ import {
   OnboardingUpdatePayload
 } from '../types';
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, '');
+function resolveApiBase(): string {
+  const envUrl = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '');
+  if (!envUrl) {
+    return '/api/v1';
+  }
+  if (envUrl.endsWith('/api/v1') || envUrl.endsWith('/v1')) {
+    return envUrl;
+  }
+  return `${envUrl}/api/v1`;
+}
+
+const API_BASE = resolveApiBase();
+
+function buildEndpointUrl(path: string): URL {
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  if (API_BASE.startsWith('http://') || API_BASE.startsWith('https://')) {
+    return new URL(`${API_BASE}${cleanPath}`);
+  }
+  return new URL(`${window.location.origin}${API_BASE}${cleanPath}`);
+}
 
 export function getAuthToken(): string | null {
   return localStorage.getItem('unframe_token');
@@ -116,7 +135,7 @@ export const api = {
 
   // Creators
   async getCreators(params?: Record<string, string>): Promise<CreatorProfile[]> {
-    const url = new URL(`${window.location.origin}${API_BASE}/creators`);
+    const url = buildEndpointUrl('/creators');
     if (params) {
       Object.entries(params).forEach(([k, v]) => {
         if (v && v !== 'all') url.searchParams.append(k, v);
@@ -264,7 +283,7 @@ export const api = {
     budget_max?: number;
     search?: string;
   }): Promise<Brief[]> {
-    const url = new URL(`${window.location.origin}${API_BASE}/briefs/open`);
+    const url = buildEndpointUrl('/briefs/open');
     if (params) {
       if (params.category && params.category !== 'all') url.searchParams.append('category', params.category);
       if (params.aspect_ratio && params.aspect_ratio !== 'all') url.searchParams.append('aspect_ratio', params.aspect_ratio);
@@ -315,7 +334,7 @@ export const api = {
 
   // Organizations
   async getOrganizations(params?: { type?: string; search?: string }): Promise<Organization[]> {
-    const url = new URL(`${window.location.origin}${API_BASE}/organizations`);
+    const url = buildEndpointUrl('/organizations');
     if (params) {
       if (params.type && params.type !== 'all') url.searchParams.append('type', params.type);
       if (params.search) url.searchParams.append('search', params.search);
@@ -339,7 +358,7 @@ export const api = {
   },
 
   async updateOrganization(id: string, org: Partial<Organization>, currentUserId?: string): Promise<Organization> {
-    const url = new URL(`${window.location.origin}${API_BASE}/organizations/${id}`);
+    const url = buildEndpointUrl(`/organizations/${id}`);
     if (currentUserId) url.searchParams.append('current_user_id', currentUserId);
     const res = await fetch(url.toString(), {
       method: 'PATCH',

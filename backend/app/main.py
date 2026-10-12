@@ -77,11 +77,18 @@ from fastapi import Request
 
 @app.middleware("http")
 async def vercel_proxy_middleware(request: Request, call_next):
-    forwarded_uri = request.headers.get("x-forwarded-uri") or request.headers.get("x-now-route-matches")
-    if forwarded_uri and not request.scope["path"].startswith("/api/v1") and not request.scope["path"].startswith("/v1"):
-        clean_path = forwarded_uri.split("?")[0]
-        if clean_path and clean_path != "/":
-            request.scope["path"] = clean_path
+    # Detect original client path forwarded by Vercel edge proxy or custom rewrites
+    matched_path = (
+        request.headers.get("x-matched-path")
+        or request.headers.get("x-forwarded-uri")
+        or request.headers.get("x-original-url")
+    )
+    if matched_path and matched_path.startswith("/"):
+        clean_path = matched_path.split("?")[0]
+        # If internal rewrite flattened path to /api/index, /api/index.py, or /api, restore original path
+        if request.scope.get("path") in ["/api/index", "/api/index.py", "/api"]:
+            if clean_path not in ["/api/index", "/api/index.py"]:
+                request.scope["path"] = clean_path
     response = await call_next(request)
     return response
 
@@ -100,6 +107,7 @@ for prefix in [api_prefix, "/v1"]:
     app.include_router(uploads.router, prefix=prefix)
 
 from fastapi import Depends
+from fastapi.responses import RedirectResponse
 from app.core.database import get_db
 from app.schemas.schemas import SubmissionFeedbackUpdate, SubmissionResponse
 from app.api.engagements import provide_submission_feedback
@@ -119,14 +127,26 @@ def health_check():
         "mode": "Active"
     }
 
+@app.get("/api/docs", include_in_schema=False)
+def api_docs_redirect():
+    return RedirectResponse(url="/docs")
+
+@app.get("/api/openapi.json", include_in_schema=False)
+def api_openapi_redirect():
+    return RedirectResponse(url="/openapi.json")
+
 @app.get("/", tags=["Root"])
 @app.get("/api", tags=["Root"])
-@app.get("/api/index", include_in_schema=False)
-@app.get("/api/index.py", include_in_schema=False)
+@app.get("/api/", tags=["Root"])
 def root():
     return {
         "message": "Welcome to UNFRAME API",
         "docs_url": "/docs",
         "api_v1": api_prefix
     }
+
+@app.get("/api/index", include_in_schema=False)
+@app.get("/api/index.py", include_in_schema=False)
+def vercel_entrypoint_fallback():
+    return root()
 
