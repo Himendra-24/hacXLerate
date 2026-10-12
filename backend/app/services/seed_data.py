@@ -7,10 +7,8 @@ from app.models.models import (
 )
 
 def _seed_demo_users(db: Session):
-    # Ensure demo brand user exists
-    brand_user = db.query(User).filter(User.email == "brand@unframe.ai").first()
-    if not brand_user:
-        brand_user = db.query(User).filter(User.id == "brand_demo_user").first()
+    # Ensure demo brand user exists (do not overwrite if already present)
+    brand_user = db.query(User).filter((User.email == "brand@unframe.ai") | (User.id == "brand_demo_user")).first()
     if not brand_user:
         brand_user = User(
             id="brand_demo_user",
@@ -23,13 +21,9 @@ def _seed_demo_users(db: Session):
             is_active=True
         )
         db.add(brand_user)
-    else:
-        brand_user.password_hash = hash_password("Password123!")
 
-    # Ensure demo creator user exists
-    creator_user = db.query(User).filter(User.email == "creator@unframe.ai").first()
-    if not creator_user:
-        creator_user = db.query(User).filter(User.id == "creator_demo_user").first()
+    # Ensure demo creator user exists (do not overwrite if already present)
+    creator_user = db.query(User).filter((User.email == "creator@unframe.ai") | (User.id == "creator_demo_user")).first()
     if not creator_user:
         creator_user = User(
             id="creator_demo_user",
@@ -42,11 +36,9 @@ def _seed_demo_users(db: Session):
             is_active=True
         )
         db.add(creator_user)
-    else:
-        creator_user.password_hash = hash_password("Password123!")
 
-    # Ensure demo admin user exists
-    admin_user = db.query(User).filter(User.email == "admin@unframe.ai").first()
+    # Ensure demo admin user exists (do not overwrite if already present)
+    admin_user = db.query(User).filter((User.email == "admin@unframe.ai") | (User.id == "admin_demo_user")).first()
     if not admin_user:
         admin_user = User(
             id="admin_demo_user",
@@ -59,33 +51,29 @@ def _seed_demo_users(db: Session):
             is_active=True
         )
         db.add(admin_user)
-    else:
-        admin_user.password_hash = hash_password("Password123!")
 
-    db.flush()
-
-    # Link Elena Rostova to creator_user if not linked
+    # Link relationships only if missing
     elena = db.query(CreatorProfile).filter(CreatorProfile.display_name == "Elena Rostova").first()
-    if elena:
-        if not elena.user_id:
-            elena.user_id = creator_user.id
-        elena.trust_level = "Established"
-        elena.verification_status = "Approved"
-        elena.email_verified = True
-        elena.ownership_code = "unframe-4821"
-        if not elena.verified_profiles:
-            elena.verified_profiles = [{"url": "https://github.com/elena-rostova-ai", "verified_at": "2026-10-01T12:00:00Z", "code_matched": "unframe-4821"}]
-        if not elena.verified_tools:
-            elena.verified_tools = [{"tool": "Runway Gen-3", "evidence_url": "https://civitai.com/models/elena-diffusion", "verified_at": "2026-10-01T12:00:00Z"}]
+    if elena and creator_user and not elena.user_id:
+        elena.user_id = creator_user.id
+        if not elena.trust_level or elena.trust_level == "Pending":
+            elena.trust_level = "Established"
+            elena.verification_status = "Approved"
+            elena.email_verified = True
+            elena.ownership_code = "unframe-4821"
 
-    # Link Acme Mobility to brand_user if not linked
     acme = db.query(Brand).filter(Brand.company_name == "Acme Mobility Studio").first()
-    if acme and not acme.owner_user_id:
+    if acme and brand_user and not acme.owner_user_id:
         acme.owner_user_id = brand_user.id
 
-    db.commit()
+    if db.new or db.dirty:
+        db.commit()
 
 def seed_database(db: Session):
+    # Fast check: If demo users and creators already exist, database is fully seeded
+    if db.query(User).count() > 0 and db.query(CreatorProfile).count() > 0:
+        return
+
     _seed_demo_users(db)
     _seed_organizations_and_briefs(db)
     # Check if already seeded
@@ -888,18 +876,14 @@ def _seed_organizations_and_briefs(db: Session):
     org_luxeglow = db.query(Brand).filter(Brand.company_name == "LuxeGlow Skincare").first()
 
     for brief in db.query(Brief).all():
-        if "Zenith" in brief.title or "EV" in brief.title:
-            if org_acme:
-                brief.organization_id = org_acme.id
-            brief.brand_user_id = "brand_demo_user"
-            brief.status = "open"
-            brief.visibility = "public"
-        elif "LuxeGlow" in brief.title or "Skincare" in brief.title:
-            if org_luxeglow:
-                brief.organization_id = org_luxeglow.id
-            brief.brand_user_id = "brand_demo_user"
-            brief.status = "open"
-            brief.visibility = "public"
+        if ("Zenith" in brief.title or "EV" in brief.title) and (not brief.organization_id and org_acme):
+            brief.organization_id = org_acme.id
+            if not brief.brand_user_id:
+                brief.brand_user_id = "brand_demo_user"
+        elif ("LuxeGlow" in brief.title or "Skincare" in brief.title) and (not brief.organization_id and org_luxeglow):
+            brief.organization_id = org_luxeglow.id
+            if not brief.brand_user_id:
+                brief.brand_user_id = "brand_demo_user"
 
     # Seed 2 additional open briefs and 1 draft brief if total briefs <= 2
     if db.query(Brief).count() <= 2:

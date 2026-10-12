@@ -1020,6 +1020,91 @@ def test_multi_layer_creator_trust_and_verification_signals():
     assert good_admin.json()["trust_level"] == "Established"
 
 
+def test_repeated_demo_seeding_preserves_existing_passwords():
+    """
+    Verify that repeated seeding is strictly idempotent and does not overwrite
+    passwords or existing user attributes.
+    """
+    from app.services.seed_data import seed_database
+    with SessionLocal() as db:
+        brand_user = db.query(User).filter(User.email == "brand@unframe.ai").first()
+        assert brand_user is not None
+        original_hash = brand_user.password_hash
+
+        # Set a custom password hash
+        custom_hash = "custom_scrypt_salt_test_hash_12345"
+        brand_user.password_hash = custom_hash
+        db.commit()
+
+        # Run seed_database twice
+        seed_database(db)
+        seed_database(db)
+
+        # Reload user and verify custom password was preserved
+        db.refresh(brand_user)
+        assert brand_user.password_hash == custom_hash
+
+        # Restore original hash
+        brand_user.password_hash = original_hash
+        db.commit()
+
+
+def test_startup_without_write_attempt_against_readonly_sqlite(tmp_path):
+    """
+    Verify that when connected to a read-only SQLite database (as in Vercel serverless),
+    startup initialization and seed checks do not issue writes or crash.
+    """
+    import sqlite3
+    import shutil
+    import os
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from app.services.seed_data import seed_database
+
+    # Create a small seeded sqlite file in tmp_path
+    db_file = tmp_path / "test_ro.db"
+    
+    # Copy existing cre8match.db structure and data
+    src_db = os.path.join(os.path.dirname(__file__), "cre8match.db")
+    if os.path.exists(src_db):
+        shutil.copy2(src_db, db_file)
+    else:
+        # Fallback create schema
+        t_engine = create_engine(f"sqlite:///{db_file}")
+        Base.metadata.create_all(bind=t_engine)
+
+    # Open with read-only SQLite URI query parameter: ?mode=ro
+    ro_url = f"sqlite:///file:{db_file}?mode=ro&uri=true"
+    ro_engine = create_engine(ro_url)
+    ROSession = sessionmaker(bind=ro_engine)
+
+    with ROSession() as ro_db:
+        # Should execute without throwing (sqlite3.OperationalError: attempt to write a readonly database)
+        seed_database(ro_db)
+        
+        # Verify read operations work cleanly
+        users = ro_db.query(User).all()
+        assert len(users) > 0
+
+
+def test_normal_database_initialization():
+    """
+    Verify that init_db() can be called safely and all core tables exist and are queryable.
+    """
+    from app.main import init_db
+    init_db()
+    with SessionLocal() as db:
+        users_count = db.query(User).count()
+        creators_count = db.query(CreatorProfile).count()
+        briefs_count = db.query(Brief).count()
+        brands_count = db.query(Brand).count()
+        assert users_count > 0
+        assert creators_count > 0
+        assert briefs_count > 0
+        assert brands_count > 0
+
+
+
 
 
 

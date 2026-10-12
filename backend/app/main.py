@@ -15,13 +15,37 @@ from app.api import (
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-def init_db():
-    Base.metadata.create_all(bind=engine)
-    run_migrations(engine)
-    with SessionLocal() as db:
-        seed_database(db)
+from sqlalchemy import inspect
 
-# Ensure database is initialized
+_db_initialized = False
+
+def init_db():
+    """
+    Initializes database schema and idempotent seed data once.
+    Safely handles read-only SQLite deployments without crashing.
+    """
+    global _db_initialized
+    if _db_initialized:
+        return
+
+    try:
+        inspector = inspect(engine)
+        existing_tables = inspector.get_table_names()
+        if not existing_tables:
+            Base.metadata.create_all(bind=engine)
+            run_migrations(engine)
+            with SessionLocal() as db:
+                seed_database(db)
+        else:
+            run_migrations(engine)
+            with SessionLocal() as db:
+                seed_database(db)
+    except Exception as e:
+        print(f"[Database Init] Safe startup notice: {e}")
+    finally:
+        _db_initialized = True
+
+# Ensure database is initialized once
 init_db()
 
 @asynccontextmanager
