@@ -73,6 +73,18 @@ app.add_middleware(
 # Static file serving for asset uploads
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
+from fastapi import Request
+
+@app.middleware("http")
+async def vercel_proxy_middleware(request: Request, call_next):
+    forwarded_uri = request.headers.get("x-forwarded-uri") or request.headers.get("x-now-route-matches")
+    if forwarded_uri and not request.scope["path"].startswith("/api/v1") and not request.scope["path"].startswith("/v1"):
+        clean_path = forwarded_uri.split("?")[0]
+        if clean_path and clean_path != "/":
+            request.scope["path"] = clean_path
+    response = await call_next(request)
+    return response
+
 # Mount API routers (supports both /api/v1 and /v1 for resilient serverless proxy routing)
 api_prefix = settings.API_V1_STR
 for prefix in [api_prefix, "/v1"]:
