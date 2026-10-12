@@ -73,18 +73,19 @@ app.add_middleware(
 # Static file serving for asset uploads
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
-# Mount API routers
+# Mount API routers (supports both /api/v1 and /v1 for resilient serverless proxy routing)
 api_prefix = settings.API_V1_STR
-app.include_router(auth.router, prefix=api_prefix)
-app.include_router(creators.router, prefix=api_prefix)
-app.include_router(briefs.router, prefix=api_prefix)
-app.include_router(organizations.router, prefix=api_prefix)
-app.include_router(matches.router, prefix=api_prefix)
-app.include_router(shortlist.router, prefix=api_prefix)
-app.include_router(engagements.router, prefix=api_prefix)
-app.include_router(messages.router, prefix=api_prefix)
-app.include_router(reviews.router, prefix=api_prefix)
-app.include_router(uploads.router, prefix=api_prefix)
+for prefix in [api_prefix, "/v1"]:
+    app.include_router(auth.router, prefix=prefix)
+    app.include_router(creators.router, prefix=prefix)
+    app.include_router(briefs.router, prefix=prefix)
+    app.include_router(organizations.router, prefix=prefix)
+    app.include_router(matches.router, prefix=prefix)
+    app.include_router(shortlist.router, prefix=prefix)
+    app.include_router(engagements.router, prefix=prefix)
+    app.include_router(messages.router, prefix=prefix)
+    app.include_router(reviews.router, prefix=prefix)
+    app.include_router(uploads.router, prefix=prefix)
 
 from fastapi import Depends
 from app.core.database import get_db
@@ -96,6 +97,8 @@ def feedback_alias(submission_id: str, data: SubmissionFeedbackUpdate, db = Depe
     return provide_submission_feedback(submission_id, data, db)
 
 @app.get("/health", tags=["Health"])
+@app.get("/api/health", tags=["Health"])
+@app.get("/api/v1/health", tags=["Health"])
 def health_check():
     return {
         "status": "healthy",
@@ -105,9 +108,13 @@ def health_check():
     }
 
 @app.get("/", tags=["Root"])
+@app.get("/api", tags=["Root"])
+@app.get("/api/index", include_in_schema=False)
+@app.get("/api/index.py", include_in_schema=False)
 def root():
     return {
         "message": "Welcome to UNFRAME API",
         "docs_url": "/docs",
         "api_v1": api_prefix
     }
+
