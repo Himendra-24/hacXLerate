@@ -15,7 +15,12 @@ router = APIRouter(prefix="/auth", tags=["Authentication & Onboarding"])
 
 def _build_auth_response(user: User, db: Session, access_token: Optional[str] = None) -> AuthResponse:
     if not access_token:
-        access_token = create_access_token({"sub": user.id, "role": user.role, "email": user.email})
+        access_token = create_access_token({
+            "sub": user.id,
+            "role": user.role,
+            "email": user.email,
+            "display_name": user.display_name
+        })
 
     creator_resp = None
     brand_resp = None
