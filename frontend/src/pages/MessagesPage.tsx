@@ -177,8 +177,13 @@ export const MessagesPage: React.FC = () => {
                 ) : error ? (
                   <div className="p-4 text-center">
                     <AlertCircle className="w-8 h-8 text-rose-400 mx-auto mb-2" />
-                    <p className="text-sm text-rose-600 mb-3">{error}</p>
-                    {error.toLowerCase().includes('authentication') && (
+                    {Boolean(
+                      error.toLowerCase().includes('auth') ||
+                      error.toLowerCase().includes('token') ||
+                      error.toLowerCase().includes('401') ||
+                      error.toLowerCase().includes('unauthorized') ||
+                      error.toLowerCase().includes('sign in')
+                    ) && (
                       <button
                         onClick={() => openAuthModal('login')}
                         className="px-4 py-1.5 rounded-xl bg-[#5B46F6] text-white text-xs font-semibold hover:bg-[#4F46E5] transition-colors shadow-sm"
