@@ -46,8 +46,7 @@ def init_db():
     finally:
         _db_initialized = True
 
-# Ensure database is initialized once
-init_db()
+# Database is initialized in lifespan context manager on application startup
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

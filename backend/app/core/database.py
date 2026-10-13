@@ -60,16 +60,28 @@ def create_database_engine():
 
     if not db_url.startswith("sqlite"):
         cleaned_url = clean_database_url(db_url)
-        # Try connecting to external database with short timeout
+        # Fast DNS resolution check to prevent serverless timeout on IPv6-only or unreachable hosts
+        can_resolve = True
         try:
-            connect_args = {"connect_timeout": 3}
-            test_engine = create_engine(cleaned_url, connect_args=connect_args, echo=False)
-            with test_engine.connect() as conn:
-                conn.execute(text("SELECT 1"))
-            print(f"[Database] Successfully connected to external database: {cleaned_url.split('@')[-1]}")
-            return test_engine, cleaned_url
+            parsed = urllib.parse.urlparse(cleaned_url)
+            if parsed.hostname:
+                import socket
+                socket.gethostbyname(parsed.hostname)
         except Exception as e:
-            print(f"[Database] External database connection notice ({e}). Falling back to writable SQLite.")
+            can_resolve = False
+            print(f"[Database] External DB host {parsed.hostname} cannot be resolved ({e}). Falling back to SQLite.")
+
+        if can_resolve:
+            # Try connecting to external database with short timeout
+            try:
+                connect_args = {"connect_timeout": 3}
+                test_engine = create_engine(cleaned_url, connect_args=connect_args, echo=False)
+                with test_engine.connect() as conn:
+                    conn.execute(text("SELECT 1"))
+                print(f"[Database] Successfully connected to external database: {cleaned_url.split('@')[-1]}")
+                return test_engine, cleaned_url
+            except Exception as e:
+                print(f"[Database] External database connection notice ({e}). Falling back to writable SQLite.")
 
     # SQLite resolution
     writable = True
