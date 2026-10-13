@@ -1,12 +1,72 @@
+import os
+import shutil
+import tempfile
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import declarative_base, sessionmaker
 from app.core.config import settings
 
+def resolve_database_url() -> str:
+    db_url = settings.DATABASE_URL
+    if not db_url.startswith("sqlite"):
+        if db_url.startswith("postgres://"):
+            return db_url.replace("postgres://", "postgresql://", 1)
+        return db_url
+
+    # Check if running in a serverless read-only environment or if local file is not writable
+    is_serverless = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+    
+    # Check directory writability
+    writable = True
+    try:
+        test_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".write_test")
+        with open(test_path, "w") as f:
+            f.write("1")
+        os.remove(test_path)
+    except Exception:
+        writable = False
+
+    if is_serverless or not writable:
+        # Resolve writable location in /tmp
+        tmp_base = "/tmp" if os.name != "nt" else tempfile.gettempdir()
+        tmp_db_path = os.path.join(tmp_base, "cre8match.db")
+        
+        # If /tmp/cre8match.db does not exist, copy the packaged seeded database into /tmp
+        if not os.path.exists(tmp_db_path):
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            candidates = [
+                os.path.join(base_dir, "cre8match.db"),
+                os.path.join(os.path.dirname(base_dir), "cre8match.db"),
+                os.path.abspath("cre8match.db"),
+                "/var/task/backend/cre8match.db",
+                "/var/task/cre8match.db",
+            ]
+            copied = False
+            for src in candidates:
+                if os.path.exists(src):
+                    try:
+                        shutil.copy2(src, tmp_db_path)
+                        print(f"[Database] Successfully copied seeded database from {src} to writable {tmp_db_path}")
+                        copied = True
+                        break
+                    except Exception as e:
+                        print(f"[Database] Notice copying from {src}: {e}")
+            if not copied:
+                print(f"[Database] Warning: Seed database source not found; creating new at {tmp_db_path}")
+
+        clean_path = tmp_db_path.replace("\\", "/")
+        if not clean_path.startswith("/") and not (len(clean_path) > 1 and clean_path[1] == ":"):
+            clean_path = "/" + clean_path
+        return f"sqlite:///{clean_path}"
+
+    return db_url
+
+RESOLVED_DATABASE_URL = resolve_database_url()
+
 # SQLite needs connect_args={"check_same_thread": False}
-connect_args = {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
+connect_args = {"check_same_thread": False} if RESOLVED_DATABASE_URL.startswith("sqlite") else {}
 
 engine = create_engine(
-    settings.DATABASE_URL,
+    RESOLVED_DATABASE_URL,
     connect_args=connect_args,
     echo=False
 )

@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, RedirectResponse
 from contextlib import asynccontextmanager
 
 from app.core.config import settings
@@ -68,7 +69,28 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=600,
 )
+
+from fastapi.responses import JSONResponse
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    import traceback
+    traceback.print_exc()
+    origin = request.headers.get("origin")
+    headers = {}
+    if origin:
+        headers["Access-Control-Allow-Origin"] = origin
+        headers["Access-Control-Allow-Credentials"] = "true"
+        headers["Access-Control-Allow-Headers"] = "*"
+        headers["Access-Control-Allow-Methods"] = "*"
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Server error: {str(exc)}"},
+        headers=headers,
+    )
 
 # Static file serving for asset uploads
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")

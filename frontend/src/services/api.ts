@@ -31,14 +31,28 @@ function resolveApiBase(): string {
   return `${envUrl}/api/v1`;
 }
 
-const API_BASE = resolveApiBase();
+export const API_BASE = resolveApiBase();
 
-function buildEndpointUrl(path: string): URL {
+export function buildApiUrl(path: string, params?: Record<string, any>): string {
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  let url: URL;
   if (API_BASE.startsWith('http://') || API_BASE.startsWith('https://')) {
-    return new URL(`${API_BASE}${cleanPath}`);
+    url = new URL(`${API_BASE}${cleanPath}`);
+  } else {
+    url = new URL(`${window.location.origin}${API_BASE}${cleanPath}`);
   }
-  return new URL(`${window.location.origin}${API_BASE}${cleanPath}`);
+  if (params) {
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== 'all') {
+        url.searchParams.append(k, String(v));
+      }
+    });
+  }
+  return url.toString();
+}
+
+export function buildEndpointUrl(path: string, params?: Record<string, any>): URL {
+  return new URL(buildApiUrl(path, params));
 }
 
 export function getAuthToken(): string | null {
@@ -100,7 +114,7 @@ async function handleResponse<T>(res: Response): Promise<T> {
 export const api = {
   // Authentication & Onboarding
   async register(data: UserRegisterPayload): Promise<AuthResponse> {
-    const res = await fetch(`${API_BASE}/auth/register`, {
+    const res = await fetch(buildApiUrl('/auth/register'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -109,7 +123,7 @@ export const api = {
   },
 
   async login(data: UserLoginPayload): Promise<AuthResponse> {
-    const res = await fetch(`${API_BASE}/auth/login`, {
+    const res = await fetch(buildApiUrl('/auth/login'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -118,14 +132,14 @@ export const api = {
   },
 
   async getMe(): Promise<AuthResponse> {
-    const res = await fetch(`${API_BASE}/auth/me`, {
+    const res = await fetch(buildApiUrl('/auth/me'), {
       headers: getAuthHeaders(),
     });
     return handleResponse<AuthResponse>(res);
   },
 
   async updateOnboarding(data: OnboardingUpdatePayload): Promise<AuthResponse> {
-    const res = await fetch(`${API_BASE}/auth/onboarding`, {
+    const res = await fetch(buildApiUrl('/auth/onboarding'), {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(data),
@@ -135,23 +149,17 @@ export const api = {
 
   // Creators
   async getCreators(params?: Record<string, string>): Promise<CreatorProfile[]> {
-    const url = buildEndpointUrl('/creators');
-    if (params) {
-      Object.entries(params).forEach(([k, v]) => {
-        if (v && v !== 'all') url.searchParams.append(k, v);
-      });
-    }
-    const res = await fetch(url.toString());
+    const res = await fetch(buildApiUrl('/creators', params));
     return handleResponse<CreatorProfile[]>(res);
   },
 
   async getCreator(id: string): Promise<CreatorProfile> {
-    const res = await fetch(`${API_BASE}/creators/${id}`);
+    const res = await fetch(buildApiUrl(`/creators/${id}`));
     return handleResponse<CreatorProfile>(res);
   },
 
   async createCreator(data: Partial<CreatorProfile>): Promise<CreatorProfile> {
-    const res = await fetch(`${API_BASE}/creators`, {
+    const res = await fetch(buildApiUrl('/creators'), {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(data),
@@ -160,7 +168,7 @@ export const api = {
   },
 
   async updateCreator(id: string, data: Partial<CreatorProfile>): Promise<CreatorProfile> {
-    const res = await fetch(`${API_BASE}/creators/${id}`, {
+    const res = await fetch(buildApiUrl(`/creators/${id}`), {
       method: 'PATCH',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(data),
@@ -169,7 +177,7 @@ export const api = {
   },
 
   async addPortfolioProject(creatorId: string, project: Partial<PortfolioProject>): Promise<PortfolioProject> {
-    const res = await fetch(`${API_BASE}/creators/${creatorId}/portfolio`, {
+    const res = await fetch(buildApiUrl(`/creators/${creatorId}/portfolio`), {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(project),
@@ -178,7 +186,7 @@ export const api = {
   },
 
   async updatePortfolioProject(creatorId: string, projectId: string, data: Partial<PortfolioProject>): Promise<PortfolioProject> {
-    const res = await fetch(`${API_BASE}/creators/${creatorId}/portfolio/${projectId}`, {
+    const res = await fetch(buildApiUrl(`/creators/${creatorId}/portfolio/${projectId}`), {
       method: 'PATCH',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(data),
@@ -187,7 +195,7 @@ export const api = {
   },
 
   async deletePortfolioProject(creatorId: string, projectId: string): Promise<{ status: string; project_id: string }> {
-    const res = await fetch(`${API_BASE}/creators/${creatorId}/portfolio/${projectId}`, {
+    const res = await fetch(buildApiUrl(`/creators/${creatorId}/portfolio/${projectId}`), {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
@@ -196,7 +204,7 @@ export const api = {
 
   // Multi-Layer Verification & Trust Signals
   async requestEmailVerification(creatorId: string): Promise<{ status: string; demo_otp?: string; message: string }> {
-    const res = await fetch(`${API_BASE}/creators/${creatorId}/verify-email/request`, {
+    const res = await fetch(buildApiUrl(`/creators/${creatorId}/verify-email/request`), {
       method: 'POST',
       headers: getAuthHeaders(),
     });
@@ -204,7 +212,7 @@ export const api = {
   },
 
   async confirmEmailVerification(creatorId: string, code: string): Promise<CreatorProfile> {
-    const res = await fetch(`${API_BASE}/creators/${creatorId}/verify-email/confirm`, {
+    const res = await fetch(buildApiUrl(`/creators/${creatorId}/verify-email/confirm`), {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ code }),
@@ -213,7 +221,7 @@ export const api = {
   },
 
   async verifyOwnership(creatorId: string, platformUrl: string): Promise<{ status: string; platform_url: string; ownership_code: string; trust_level: string; message: string }> {
-    const res = await fetch(`${API_BASE}/creators/${creatorId}/verify-ownership`, {
+    const res = await fetch(buildApiUrl(`/creators/${creatorId}/verify-ownership`), {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ platform_url: platformUrl }),
@@ -222,7 +230,7 @@ export const api = {
   },
 
   async verifyToolProof(creatorId: string, toolName: string, evidenceUrl: string): Promise<{ status: string; tool_name: string; evidence_url: string; trust_level: string; message: string }> {
-    const res = await fetch(`${API_BASE}/creators/${creatorId}/verify-tool-proof`, {
+    const res = await fetch(buildApiUrl(`/creators/${creatorId}/verify-tool-proof`), {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ tool_name: toolName, evidence_url: evidenceUrl }),
@@ -231,7 +239,7 @@ export const api = {
   },
 
   async adminReviewCreator(creatorId: string, decision: 'approve' | 'reject', notes?: string): Promise<CreatorProfile> {
-    const res = await fetch(`${API_BASE}/creators/${creatorId}/admin-review`, {
+    const res = await fetch(buildApiUrl(`/creators/${creatorId}/admin-review`), {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ decision, notes }),
@@ -241,7 +249,7 @@ export const api = {
 
   // Briefs & AI Builder
   async structureRawIdea(rawIdea: string, targetAudience?: string, preferredFormat?: string): Promise<StructuredDraftSuggestion> {
-    const res = await fetch(`${API_BASE}/briefs/structure`, {
+    const res = await fetch(buildApiUrl('/briefs/structure'), {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
@@ -254,21 +262,21 @@ export const api = {
   },
 
   async getBriefs(): Promise<Brief[]> {
-    const res = await fetch(`${API_BASE}/briefs`, {
+    const res = await fetch(buildApiUrl('/briefs'), {
       headers: getAuthHeaders(),
     });
     return handleResponse<Brief[]>(res);
   },
 
   async getBrief(id: string): Promise<Brief> {
-    const res = await fetch(`${API_BASE}/briefs/${id}`, {
+    const res = await fetch(buildApiUrl(`/briefs/${id}`), {
       headers: getAuthHeaders(),
     });
     return handleResponse<Brief>(res);
   },
 
   async createBrief(brief: Partial<Brief>): Promise<Brief> {
-    const res = await fetch(`${API_BASE}/briefs`, {
+    const res = await fetch(buildApiUrl('/briefs'), {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(brief),
@@ -283,15 +291,7 @@ export const api = {
     budget_max?: number;
     search?: string;
   }): Promise<Brief[]> {
-    const url = buildEndpointUrl('/briefs/open');
-    if (params) {
-      if (params.category && params.category !== 'all') url.searchParams.append('category', params.category);
-      if (params.aspect_ratio && params.aspect_ratio !== 'all') url.searchParams.append('aspect_ratio', params.aspect_ratio);
-      if (params.budget_min !== undefined) url.searchParams.append('budget_min', params.budget_min.toString());
-      if (params.budget_max !== undefined) url.searchParams.append('budget_max', params.budget_max.toString());
-      if (params.search) url.searchParams.append('search', params.search);
-    }
-    const res = await fetch(url.toString());
+    const res = await fetch(buildApiUrl('/briefs/open', params));
     return handleResponse<Brief[]>(res);
   },
 
@@ -299,7 +299,7 @@ export const api = {
     briefId: string,
     data: { creator_id?: string; pitch: string; proposed_rate?: number; portfolio_sample_urls?: string[] }
   ): Promise<BriefApplication> {
-    const res = await fetch(`${API_BASE}/briefs/${briefId}/apply`, {
+    const res = await fetch(buildApiUrl(`/briefs/${briefId}/apply`), {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(data),
@@ -308,19 +308,19 @@ export const api = {
   },
 
   async getBriefApplications(briefId: string): Promise<BriefApplication[]> {
-    const res = await fetch(`${API_BASE}/briefs/${briefId}/applications`);
+    const res = await fetch(buildApiUrl(`/briefs/${briefId}/applications`));
     return handleResponse<BriefApplication[]>(res);
   },
 
   async getMyBriefApplications(): Promise<BriefApplication[]> {
-    const res = await fetch(`${API_BASE}/briefs/my-applications/all`, {
+    const res = await fetch(buildApiUrl('/briefs/my-applications/all'), {
       headers: getAuthHeaders(),
     });
     return handleResponse<BriefApplication[]>(res);
   },
 
   async updateApplicationStatus(applicationId: string, status: string): Promise<BriefApplication> {
-    const res = await fetch(`${API_BASE}/briefs/applications/${applicationId}`, {
+    const res = await fetch(buildApiUrl(`/briefs/applications/${applicationId}`), {
       method: 'PATCH',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ status }),
@@ -334,22 +334,17 @@ export const api = {
 
   // Organizations
   async getOrganizations(params?: { type?: string; search?: string }): Promise<Organization[]> {
-    const url = buildEndpointUrl('/organizations');
-    if (params) {
-      if (params.type && params.type !== 'all') url.searchParams.append('type', params.type);
-      if (params.search) url.searchParams.append('search', params.search);
-    }
-    const res = await fetch(url.toString());
+    const res = await fetch(buildApiUrl('/organizations', params));
     return handleResponse<Organization[]>(res);
   },
 
   async getOrganization(id: string): Promise<Organization> {
-    const res = await fetch(`${API_BASE}/organizations/${id}`);
+    const res = await fetch(buildApiUrl(`/organizations/${id}`));
     return handleResponse<Organization>(res);
   },
 
   async createOrganization(org: Partial<Organization>): Promise<Organization> {
-    const res = await fetch(`${API_BASE}/organizations`, {
+    const res = await fetch(buildApiUrl('/organizations'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(org),
@@ -358,9 +353,7 @@ export const api = {
   },
 
   async updateOrganization(id: string, org: Partial<Organization>, currentUserId?: string): Promise<Organization> {
-    const url = buildEndpointUrl(`/organizations/${id}`);
-    if (currentUserId) url.searchParams.append('current_user_id', currentUserId);
-    const res = await fetch(url.toString(), {
+    const res = await fetch(buildApiUrl(`/organizations/${id}`, currentUserId ? { current_user_id: currentUserId } : undefined), {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -373,14 +366,14 @@ export const api = {
 
   // Creative Fit Intelligence Matching
   async getMatchesForBrief(briefId: string, filterPassedOnly = false): Promise<CreatorMatchResult[]> {
-    const res = await fetch(`${API_BASE}/briefs/${briefId}/matches?filter_passed_only=${filterPassedOnly}`, {
+    const res = await fetch(buildApiUrl(`/briefs/${briefId}/matches`, { filter_passed_only: filterPassedOnly }), {
       method: 'POST',
     });
     return handleResponse<CreatorMatchResult[]>(res);
   },
 
   async previewMatches(draft: Partial<Brief>): Promise<CreatorMatchResult[]> {
-    const res = await fetch(`${API_BASE}/matches/preview`, {
+    const res = await fetch(buildApiUrl('/matches/preview'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(draft),
@@ -390,13 +383,14 @@ export const api = {
 
   // Shortlist
   async getShortlist(briefId?: string): Promise<ShortlistItem[]> {
-    const url = briefId ? `${API_BASE}/shortlist?brief_id=${briefId}` : `${API_BASE}/shortlist`;
-    const res = await fetch(url, { headers: getAuthHeaders() });
+    const res = await fetch(buildApiUrl('/shortlist', briefId ? { brief_id: briefId } : undefined), {
+      headers: getAuthHeaders(),
+    });
     return handleResponse<ShortlistItem[]>(res);
   },
 
   async addToShortlist(creatorId: string, briefId?: string, notes?: string): Promise<ShortlistItem> {
-    const res = await fetch(`${API_BASE}/shortlist`, {
+    const res = await fetch(buildApiUrl('/shortlist'), {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ creator_id: creatorId, brief_id: briefId, notes }),
@@ -405,7 +399,7 @@ export const api = {
   },
 
   async removeFromShortlist(shortlistId: string): Promise<void> {
-    const res = await fetch(`${API_BASE}/shortlist/${shortlistId}`, {
+    const res = await fetch(buildApiUrl(`/shortlist/${shortlistId}`), {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
@@ -413,26 +407,26 @@ export const api = {
   },
 
   async removeCreatorFromShortlist(creatorId: string, briefId?: string): Promise<void> {
-    const url = briefId
-      ? `${API_BASE}/shortlist/creator/${creatorId}?brief_id=${briefId}`
-      : `${API_BASE}/shortlist/creator/${creatorId}`;
-    const res = await fetch(url, { method: 'DELETE', headers: getAuthHeaders() });
+    const res = await fetch(buildApiUrl(`/shortlist/creator/${creatorId}`, briefId ? { brief_id: briefId } : undefined), {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
     await handleResponse(res);
   },
 
   // Engagements & Delivery
   async getEngagements(): Promise<Engagement[]> {
-    const res = await fetch(`${API_BASE}/engagements`);
+    const res = await fetch(buildApiUrl('/engagements'));
     return handleResponse<Engagement[]>(res);
   },
 
   async getEngagement(id: string): Promise<Engagement> {
-    const res = await fetch(`${API_BASE}/engagements/${id}`);
+    const res = await fetch(buildApiUrl(`/engagements/${id}`));
     return handleResponse<Engagement>(res);
   },
 
   async createEngagement(briefId: string, creatorId: string, agreedTerms?: Record<string, any>): Promise<Engagement> {
-    const res = await fetch(`${API_BASE}/engagements`, {
+    const res = await fetch(buildApiUrl('/engagements'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ brief_id: briefId, creator_id: creatorId, agreed_terms: agreedTerms }),
@@ -441,7 +435,7 @@ export const api = {
   },
 
   async updateEngagement(id: string, status: string): Promise<Engagement> {
-    const res = await fetch(`${API_BASE}/engagements/${id}`, {
+    const res = await fetch(buildApiUrl(`/engagements/${id}`), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
@@ -450,7 +444,7 @@ export const api = {
   },
 
   async addSubmission(engagementId: string, mediaUrl: string, creatorNote?: string): Promise<Submission> {
-    const res = await fetch(`${API_BASE}/engagements/${engagementId}/submissions`, {
+    const res = await fetch(buildApiUrl(`/engagements/${engagementId}/submissions`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ media_url: mediaUrl, creator_note: creatorNote }),
@@ -459,7 +453,7 @@ export const api = {
   },
 
   async provideSubmissionFeedback(submissionId: string, feedback: string, status: string): Promise<Submission> {
-    const res = await fetch(`${API_BASE}/engagements/submissions/${submissionId}/feedback`, {
+    const res = await fetch(buildApiUrl(`/engagements/submissions/${submissionId}/feedback`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ brand_feedback: feedback, status }),
@@ -469,21 +463,21 @@ export const api = {
 
   // Messaging & Live Chat
   async getMessageThreads(): Promise<MessageThreadSummary[]> {
-    const res = await fetch(`${API_BASE}/messages/threads`, {
+    const res = await fetch(buildApiUrl('/messages/threads'), {
       headers: getAuthHeaders(),
     });
     return handleResponse<MessageThreadSummary[]>(res);
   },
 
   async getConversation(partnerId: string): Promise<Message[]> {
-    const res = await fetch(`${API_BASE}/messages/conversation/${partnerId}`, {
+    const res = await fetch(buildApiUrl(`/messages/conversation/${partnerId}`), {
       headers: getAuthHeaders(),
     });
     return handleResponse<Message[]>(res);
   },
 
   async getEngagementMessages(engagementId: string): Promise<Message[]> {
-    const res = await fetch(`${API_BASE}/messages/engagement/${engagementId}`, {
+    const res = await fetch(buildApiUrl(`/messages/engagement/${engagementId}`), {
       headers: getAuthHeaders(),
     });
     return handleResponse<Message[]>(res);
@@ -500,7 +494,7 @@ export const api = {
     attachment_url?: string;
     attachment_name?: string;
   }): Promise<Message> {
-    const res = await fetch(`${API_BASE}/messages`, {
+    const res = await fetch(buildApiUrl('/messages'), {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(msg),
@@ -509,7 +503,7 @@ export const api = {
   },
 
   async markThreadRead(partnerId: string): Promise<void> {
-    await fetch(`${API_BASE}/messages/mark-thread-read/${partnerId}`, {
+    await fetch(buildApiUrl(`/messages/mark-thread-read/${partnerId}`), {
       method: 'POST',
       headers: getAuthHeaders(),
     });
@@ -517,7 +511,7 @@ export const api = {
 
   // Reviews & Ratings
   async getCreatorReviews(creatorId: string): Promise<Review[]> {
-    const res = await fetch(`${API_BASE}/reviews/creator/${creatorId}`);
+    const res = await fetch(buildApiUrl(`/reviews/creator/${creatorId}`));
     return handleResponse<Review[]>(res);
   },
 
@@ -533,7 +527,7 @@ export const api = {
     comment: string;
     project_title?: string;
   }): Promise<Review> {
-    const res = await fetch(`${API_BASE}/reviews`, {
+    const res = await fetch(buildApiUrl('/reviews'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(review),
@@ -559,7 +553,7 @@ export const api = {
     const headers = getAuthHeaders();
     delete headers['Content-Type'];
 
-    const res = await fetch(`${API_BASE}/uploads`, {
+    const res = await fetch(buildApiUrl('/uploads'), {
       method: 'POST',
       headers,
       body: formData,
@@ -577,4 +571,3 @@ export const api = {
     return this.uploadFile(file, uploaderRole, fileType, relatedEntityType, relatedEntityId);
   },
 };
-

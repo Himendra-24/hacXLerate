@@ -10,6 +10,7 @@ def get_cors_origins() -> list[str]:
         "http://127.0.0.1:5173",
         "http://localhost:3000",
         "https://hac-x-lerate-ywm3.vercel.app",
+        "https://hac-x-lerate-murex.vercel.app",
     ]
     env_origins = os.getenv("CORS_ORIGINS")
     if env_origins:
