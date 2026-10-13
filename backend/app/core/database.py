@@ -5,17 +5,73 @@ from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import declarative_base, sessionmaker
 from app.core.config import settings
 
-def resolve_database_url() -> str:
-    db_url = settings.DATABASE_URL
-    if not db_url.startswith("sqlite"):
-        if db_url.startswith("postgres://"):
-            return db_url.replace("postgres://", "postgresql://", 1)
-        return db_url
+import re
+import urllib.parse
 
-    # Check if running in a serverless read-only environment or if local file is not writable
-    is_serverless = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+def clean_database_url(url: str) -> str:
+    m = re.match(r'^(postgres(?:ql)?(?:\+[a-zA-Z0-9_]+)?://)([^:]+):(.*)@([^@]+)$', url)
+    if m:
+        scheme, user, password, host_part = m.groups()
+        if password.startswith('[') and password.endswith(']'):
+            password = password[1:-1]
+        unquoted = urllib.parse.unquote(password)
+        encoded_pass = urllib.parse.quote(unquoted, safe='')
+        return f"postgresql://{user}:{encoded_pass}@{host_part}"
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql://", 1)
+    return url
+
+def build_sqlite_fallback_url() -> str:
+    # Resolve writable location in /tmp
+    tmp_base = "/tmp" if os.name != "nt" else tempfile.gettempdir()
+    tmp_db_path = os.path.join(tmp_base, "cre8match.db")
     
-    # Check directory writability
+    # If /tmp/cre8match.db does not exist, copy the packaged seeded database into /tmp
+    if not os.path.exists(tmp_db_path):
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        candidates = [
+            os.path.join(base_dir, "cre8match.db"),
+            os.path.join(os.path.dirname(base_dir), "cre8match.db"),
+            os.path.abspath("cre8match.db"),
+            "/var/task/backend/cre8match.db",
+            "/var/task/cre8match.db",
+        ]
+        copied = False
+        for src in candidates:
+            if os.path.exists(src):
+                try:
+                    shutil.copy2(src, tmp_db_path)
+                    print(f"[Database] Successfully copied seeded database from {src} to writable {tmp_db_path}")
+                    copied = True
+                    break
+                except Exception as e:
+                    print(f"[Database] Notice copying from {src}: {e}")
+        if not copied:
+            print(f"[Database] Warning: Seed database source not found; creating new at {tmp_db_path}")
+
+    clean_path = tmp_db_path.replace("\\", "/")
+    if not clean_path.startswith("/") and not (len(clean_path) > 1 and clean_path[1] == ":"):
+        clean_path = "/" + clean_path
+    return f"sqlite:///{clean_path}"
+
+def create_database_engine():
+    db_url = settings.DATABASE_URL
+    is_serverless = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+
+    if not db_url.startswith("sqlite"):
+        cleaned_url = clean_database_url(db_url)
+        # Try connecting to external database with short timeout
+        try:
+            connect_args = {"connect_timeout": 3}
+            test_engine = create_engine(cleaned_url, connect_args=connect_args, echo=False)
+            with test_engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            print(f"[Database] Successfully connected to external database: {cleaned_url.split('@')[-1]}")
+            return test_engine, cleaned_url
+        except Exception as e:
+            print(f"[Database] External database connection notice ({e}). Falling back to writable SQLite.")
+
+    # SQLite resolution
     writable = True
     try:
         test_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".write_test")
@@ -26,50 +82,14 @@ def resolve_database_url() -> str:
         writable = False
 
     if is_serverless or not writable:
-        # Resolve writable location in /tmp
-        tmp_base = "/tmp" if os.name != "nt" else tempfile.gettempdir()
-        tmp_db_path = os.path.join(tmp_base, "cre8match.db")
-        
-        # If /tmp/cre8match.db does not exist, copy the packaged seeded database into /tmp
-        if not os.path.exists(tmp_db_path):
-            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            candidates = [
-                os.path.join(base_dir, "cre8match.db"),
-                os.path.join(os.path.dirname(base_dir), "cre8match.db"),
-                os.path.abspath("cre8match.db"),
-                "/var/task/backend/cre8match.db",
-                "/var/task/cre8match.db",
-            ]
-            copied = False
-            for src in candidates:
-                if os.path.exists(src):
-                    try:
-                        shutil.copy2(src, tmp_db_path)
-                        print(f"[Database] Successfully copied seeded database from {src} to writable {tmp_db_path}")
-                        copied = True
-                        break
-                    except Exception as e:
-                        print(f"[Database] Notice copying from {src}: {e}")
-            if not copied:
-                print(f"[Database] Warning: Seed database source not found; creating new at {tmp_db_path}")
+        fallback_url = build_sqlite_fallback_url()
+    else:
+        fallback_url = db_url
 
-        clean_path = tmp_db_path.replace("\\", "/")
-        if not clean_path.startswith("/") and not (len(clean_path) > 1 and clean_path[1] == ":"):
-            clean_path = "/" + clean_path
-        return f"sqlite:///{clean_path}"
+    engine = create_engine(fallback_url, connect_args={"check_same_thread": False}, echo=False)
+    return engine, fallback_url
 
-    return db_url
-
-RESOLVED_DATABASE_URL = resolve_database_url()
-
-# SQLite needs connect_args={"check_same_thread": False}
-connect_args = {"check_same_thread": False} if RESOLVED_DATABASE_URL.startswith("sqlite") else {}
-
-engine = create_engine(
-    RESOLVED_DATABASE_URL,
-    connect_args=connect_args,
-    echo=False
-)
+engine, RESOLVED_DATABASE_URL = create_database_engine()
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
